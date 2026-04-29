@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intel CPC · Compromiso por Concordia · Sistema de Análisis Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080b14;--s1:#0e1120;--s2:#141828;--s3:#1c2238;--s4:#242d4a;
+  --acc:#4f7cff;--acc2:#7c5cfc;--acc3:#00d4aa;
+  --grn:#22d07a;--amb:#f59e0b;--red:#ef4444;--pink:#ec4899;--pur:#a855f7;--ora:#f97316;
+  --t1:#eef0f8;--t2:#8b92b8;--t3:#4a5070;--t4:#2a2f4a;
+  --brd:rgba(79,124,255,0.18);--brd2:rgba(255,255,255,0.06);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:'DM Sans',sans-serif;display:flex}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+
+/* SIDEBAR */
+#sidebar{width:236px;background:var(--s1);border-right:1px solid var(--brd2);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--brd2)}
+.logo-main{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-city{font-size:11px;color:var(--t2);font-weight:500;margin-top:2px}
+.logo-sub{font-size:9px;color:var(--t4);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.nav-group{padding:14px 10px 6px}
+.nav-label{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;padding:0 8px 7px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:10px;border:none;background:none;color:var(--t2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;text-align:left}
+.nav-btn:hover{background:var(--s2);color:var(--t1)}
+.nav-btn.active{background:linear-gradient(135deg,rgba(79,124,255,0.18),rgba(124,92,252,0.08));color:var(--acc);font-weight:500}
+.nav-btn svg{width:15px;height:15px;flex-shrink:0;opacity:0.7}
+.nav-btn.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--acc);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600}
+.nav-badge.grn{background:var(--grn)}
+.nav-badge.amb{background:var(--amb)}
+.nav-badge.red{background:var(--red)}
+.sidebar-foot{margin-top:auto;padding:12px 14px;border-top:1px solid var(--brd2)}
+.foot-status{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t2)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{background:var(--s1);border-bottom:1px solid var(--brd2);padding:12px 22px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#pageTitle{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.3px;flex:1}
+.top-search{background:var(--s2);border:1px solid var(--brd2);border-radius:9px;padding:7px 13px;font-size:13px;color:var(--t1);font-family:'DM Sans',sans-serif;outline:none;width:220px;transition:border-color 0.2s}
+.top-search::placeholder{color:var(--t3)}
+.top-search:focus{border-color:var(--brd)}
+.top-btn{padding:7px 15px;border-radius:9px;font-size:13px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.2s;white-space:nowrap}
+.btn-acc{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff}
+.btn-acc:hover{opacity:0.9}
+.btn-ghost{background:var(--s2);color:var(--t2);border:1px solid var(--brd2)}
+.btn-ghost:hover{color:var(--t1);border-color:var(--brd)}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:7px}
+
+#content{flex:1;overflow-y:auto;overflow-x:hidden}
+.screen{display:none;padding:20px 22px;animation:fadeIn 0.2s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+#screen-mapa{display:none;height:100%}
+#screen-mapa.active{display:flex;padding:0}
+
+/* CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.scard{background:var(--s1);border:1px solid var(--brd2);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;transition:transform 0.15s,border-color 0.15s}
+.scard:hover{transform:translateY(-2px);border-color:var(--brd)}
+.scard-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px}
+.scard-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;background:linear-gradient(135deg,var(--cA,var(--acc)),var(--cB,var(--acc2)));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.scard-sub{font-size:11px;color:var(--t3);margin-top:6px}
+.scard-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:26px;opacity:0.08}
+
+/* SECTION */
+.sec{background:var(--s1);border:1px solid var(--brd2);border-radius:16px;overflow:hidden;margin-bottom:14px}
+.sec-head{padding:14px 18px;border-bottom:1px solid var(--brd2);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sec-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:-0.2px;display:flex;align-items:center;gap:8px}
+.sec-badge{font-size:10px;background:var(--s3);border:1px solid var(--brd2);border-radius:20px;padding:2px 9px;color:var(--t3);font-weight:500;font-family:'DM Sans',sans-serif}
+.sec-body{padding:18px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3);font-weight:600;padding:9px 13px;border-bottom:1px solid var(--brd2);text-align:left;background:var(--s2);white-space:nowrap}
+td{padding:9px 13px;font-size:13px;border-bottom:1px solid var(--brd2);color:var(--t2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+
+/* BADGES */
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;display:inline-block}
+.bg{background:rgba(34,208,122,0.12);color:var(--grn)}
+.ba{background:rgba(245,158,11,0.12);color:var(--amb)}
+.br{background:rgba(239,68,68,0.12);color:var(--red)}
+.bb{background:rgba(79,124,255,0.12);color:var(--acc)}
+.bp{background:rgba(168,85,247,0.12);color:var(--pur)}
+.bo{background:rgba(249,115,22,0.12);color:var(--ora)}
+.bgr{background:var(--s3);color:var(--t2)}
+.bpk{background:rgba(236,72,153,0.12);color:var(--pink)}
+
+/* AVATAR */
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--s4);flex-shrink:0}
+.avatar-ph{width:34px;height:34px;border-radius:50%;background:var(--s3);border:2px solid var(--s4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--t3);flex-shrink:0;font-family:'Syne',sans-serif}
+.user-cell{display:flex;align-items:center;gap:10px}
+.user-name{font-size:13px;font-weight:500;color:var(--t1)}
+.user-handle{font-size:11px;color:var(--acc);margin-top:1px;font-family:'DM Sans',sans-serif}
+
+/* LINKS */
+.ig-link{color:var(--pink);text-decoration:none;font-size:11px;padding:3px 8px;background:rgba(236,72,153,0.08);border-radius:5px;border:1px solid rgba(236,72,153,0.18);display:inline-flex;align-items:center;gap:4px;transition:all 0.15s}
+.ig-link:hover{background:rgba(236,72,153,0.15);border-color:rgba(236,72,153,0.3)}
+.li-link{color:#0a66c2;text-decoration:none;font-size:11px;padding:3px 8px;background:rgba(10,102,194,0.1);border-radius:5px;border:1px solid rgba(10,102,194,0.25);display:inline-flex;align-items:center;gap:4px;transition:all 0.15s}
+.li-link:hover{background:rgba(10,102,194,0.18)}
+
+/* PROGRESS */
+.prog{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;width:70px;display:inline-block;vertical-align:middle;margin-left:6px}
+.prog-f{height:100%;border-radius:2px}
+
+/* MAPA */
+#mapDiv{flex:1;z-index:1}
+.map-sidebar{width:340px;background:var(--s1);border-left:1px solid var(--brd2);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.map-top{padding:14px 16px;border-bottom:1px solid var(--brd2)}
+.map-filters{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.filter-chip{padding:4px 11px;border-radius:20px;font-size:11px;border:1px solid var(--brd2);background:var(--s2);color:var(--t2);cursor:pointer;transition:all 0.15s}
+.filter-chip.on{border-color:var(--acc);color:var(--acc);background:rgba(79,124,255,0.1)}
+.map-list{flex:1;overflow-y:auto;padding:8px}
+.mcard{background:var(--s2);border:1px solid var(--brd2);border-radius:12px;padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:all 0.15s}
+.mcard:hover{border-color:var(--brd);background:var(--s3)}
+.mcard-name{font-weight:500;font-size:13px;color:var(--t1);margin-bottom:2px}
+.mcard-sub{font-size:11px;color:var(--t3);margin-bottom:6px}
+.mcard-tags{display:flex;gap:5px;flex-wrap:wrap}
+
+/* POSTS */
+.posts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.post-card{background:var(--s1);border:1px solid var(--brd2);border-radius:14px;overflow:hidden;transition:border-color 0.15s,transform 0.15s}
+.post-card:hover{border-color:var(--brd);transform:translateY(-2px)}
+.post-thumb{width:100%;aspect-ratio:1;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+.post-rank{position:absolute;top:8px;left:8px;background:var(--s1);border:1px solid var(--brd);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;color:var(--acc)}
+.post-info{padding:12px 14px}
+.post-likes{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--pink)}
+.post-meta{font-size:11px;color:var(--t3);margin-top:3px}
+.post-desc{font-size:12px;color:var(--t2);margin-top:8px;line-height:1.5}
+.post-who{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+
+/* INFORME */
+.informe-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.info-card{background:var(--s1);border:1px solid var(--brd2);border-radius:14px;padding:16px 18px}
+.info-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:12px;color:var(--acc);display:flex;align-items:center;gap:7px}
+.info-p{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.info-p:last-child{margin-bottom:0}
+.recom-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd2)}
+.recom-item:last-child{border-bottom:none}
+.recom-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--acc);min-width:24px;line-height:1.2}
+.recom-text{font-size:12px;color:var(--t2);line-height:1.6}
+.recom-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:3px}
+.timeline-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--brd2)}
+.timeline-item:last-child{border-bottom:none}
+.tl-date{font-size:10px;color:var(--acc);font-weight:700;font-family:'Syne',sans-serif;min-width:60px;padding-top:2px}
+.tl-dot2{width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:4px;box-shadow:0 0 6px var(--acc)}
+.tl-content{flex:1}
+.tl-event{font-size:13px;color:var(--t1);font-weight:500;margin-bottom:3px}
+.tl-source{font-size:11px;color:var(--t3)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--s1);border:1px solid var(--brd);border-radius:20px;width:100%;max-width:680px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(10px);transition:transform 0.2s;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.overlay.open .modal{transform:translateY(0)}
+.modal-hd{padding:20px 22px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
+.modal-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.modal-sub{font-size:12px;color:var(--t3);margin-top:3px}
+.mclose{background:var(--s2);border:1px solid var(--brd2);width:30px;height:30px;border-radius:8px;cursor:pointer;color:var(--t2);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s}
+.mclose:hover{color:var(--t1)}
+.modal-body{padding:18px 22px 22px;overflow-y:auto;flex:1}
+.msec{margin-bottom:16px}
+.msec-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);font-weight:600;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--brd2)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fld{background:var(--s2);border-radius:10px;padding:11px 13px}
+.fld-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px}
+.fld-val{font-size:13px;color:var(--t1);font-weight:500}
+.modal-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--s4);flex-shrink:0}
+.modal-avatar-ph{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--s3),var(--s4));border:3px solid var(--s4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--t3);flex-shrink:0;font-family:'Syne',sans-serif}
+.modal-hd-info{display:flex;align-items:flex-start;gap:16px;padding:14px 22px 18px}
+.soc-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+
+/* BARS */
+.bar-c{display:flex;flex-direction:column;gap:10px}
+.bar-r{display:grid;grid-template-columns:120px 1fr 40px;align-items:center;gap:8px}
+.bar-lbl{font-size:12px;color:var(--t2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{background:var(--s2);border-radius:4px;height:20px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.9)}
+.bar-n{font-size:12px;color:var(--t3);text-align:right}
+
+.leaflet-popup-content-wrapper{background:var(--s2)!important;color:var(--t1)!important;border:1px solid var(--brd)!important;border-radius:12px!important;box-shadow:var(--shadow)!important;font-family:'DM Sans',sans-serif!important}
+.leaflet-popup-tip{background:var(--s2)!important}
+.leaflet-popup-content{margin:13px 15px!important;font-size:13px}
+.pop-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px}
+.pop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.pop-lbl{color:var(--t3)}
+.pop-val{color:var(--t1)}
+.pop-btn{display:block;margin-top:10px;padding:8px 0;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;width:100%;font-weight:500;text-align:center;font-family:'DM Sans',sans-serif}
+
+/* Meter */
+.meter-block{margin-bottom:10px}
+.meter-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:5px}
+.meter-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.meter-fill{height:100%;border-radius:3px}
+
+/* Select */
+select{background:var(--s2);border:1px solid var(--brd2);border-radius:7px;color:var(--t2);padding:5px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+select:focus{border-color:var(--brd)}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#loginScreen.hidden{display:none}
+.login-box{background:var(--s1);border:1px solid var(--brd);border-radius:22px;padding:40px 44px;width:360px;box-shadow:0 32px 100px rgba(0,0,0,0.6)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-main{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-logo-sub{font-size:11px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.login-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px;display:block}
+.login-input{width:100%;background:var(--s2);border:1px solid var(--brd2);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;margin-bottom:16px}
+.login-input:focus{border-color:var(--acc)}
+.login-btn{width:100%;padding:13px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;cursor:pointer;transition:opacity 0.2s;letter-spacing:0.3px}
+.login-btn:hover{opacity:0.88}
+.login-err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:var(--red);font-size:12px;padding:9px 12px;margin-bottom:14px;display:none}
+.login-err.show{display:block}
+.login-footer{text-align:center;font-size:10px;color:var(--t4);margin-top:18px;letter-spacing:0.5px}
+#appWrapper{display:none}
+#appWrapper.visible{display:flex;width:100%;height:100%}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-main">INTEL · CPC</div>
+      <div class="login-logo-sub">Sistema de Análisis Digital</div>
+      <div style="font-size:11px;color:var(--t4);margin-top:6px">Compromiso por Concordia · Concordia</div>
+    </div>
+    <div id="loginErr" class="login-err">Usuario o contraseña incorrectos.</div>
+    <label class="login-label">Usuario</label>
+    <input id="loginUser" class="login-input" type="text" placeholder="Ingrese su usuario" autocomplete="username">
+    <label class="login-label">Contraseña</label>
+    <input id="loginPass" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Ingresar al Sistema</button>
+    <div class="login-footer">Acceso restringido — Solo personal autorizado CPC</div>
+  </div>
+</div>
+
+<div id="appWrapper">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <div class="logo-main">INTEL · CPC</div>
+    <div class="logo-city">Compromiso por Concordia</div>
+    <div class="logo-sub">Sistema de Análisis Digital</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Módulos</div>
+    <button class="nav-btn active" onclick="showScreen('overview',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="nav-btn" onclick="showScreen('usuarios',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Base de Seguidores
+      <span class="nav-badge">412</span>
+    </button>
+    <button class="nav-btn" onclick="showScreen('mapa',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Mapa Territorial
+    </button>
+    <button class="nav-btn" onclick="showScreen('posts',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Posts con Más Likes
+      <span class="nav-badge grn">Top</span>
+    </button>
+    <button class="nav-btn" onclick="showScreen('informe',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Informe Estratégico
+      <span class="nav-badge amb">IA</span>
+    </button>
+    <button class="nav-btn" onclick="showScreen('contactos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Contactos Territoriales
+      <span class="nav-badge" style="background:var(--ora)">500+</span>
+    </button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Sujeto analizado</div>
+    <button class="nav-btn" onclick="showScreen('sierra',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Álvaro Sierra
+      <span class="nav-badge red">!</span>
+    </button>
+  </div>
+
+  <div class="sidebar-foot">
+    <div class="foot-status"><div class="status-dot"></div>Sistema activo · Abr 2026</div>
+    <div style="font-size:10px;color:var(--t4);margin-top:6px">@compromisoporconordia · 940 seg.</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div id="pageTitle">Overview — Dashboard General</div>
+    <input class="top-search" id="globalSearch" placeholder="Buscar usuario o nombre…" oninput="globalFilter(this.value)">
+    <button class="top-btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+    <button class="top-btn btn-acc btn-sm" onclick="showScreen('informe', document.querySelector('.nav-btn:nth-child(5)'))">Ver Informe IA</button>
+  </div>
+
+  <div id="content">
+
+    <!-- OVERVIEW -->
+    <div id="screen-overview" class="screen active">
+      <div class="stats-row">
+        <div class="scard" style="--cA:#4f7cff;--cB:#7c5cfc">
+          <div class="scard-lbl">Total seguidores</div>
+          <div class="scard-val">940</div>
+          <div class="scard-sub">↑ +12.4% vs mes anterior</div>
+          <div class="scard-ico">👥</div>
+        </div>
+        <div class="scard" style="--cA:#22d07a;--cB:#00d4aa">
+          <div class="scard-lbl">Datos capturados</div>
+          <div class="scard-val">412</div>
+          <div class="scard-sub">43.8% del total</div>
+          <div class="scard-ico">📊</div>
+        </div>
+        <div class="scard" style="--cA:#f59e0b;--cB:#f97316">
+          <div class="scard-lbl">Engagement estimado</div>
+          <div class="scard-val">6.8%</div>
+          <div class="scard-sub">Alto para nicho político</div>
+          <div class="scard-ico">🔥</div>
+        </div>
+        <div class="scard" style="--cA:#ec4899;--cB:#a855f7">
+          <div class="scard-lbl">Post top (real)</div>
+          <div class="scard-val">135</div>
+          <div class="scard-sub">Carrusel IA Estratégica</div>
+          <div class="scard-ico">❤️</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Distribución por tipo de usuario</div></div>
+          <div class="sec-body">
+            <div class="bar-c" id="tiposBar"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Apellidos más frecuentes</div></div>
+          <div class="sec-body">
+            <div class="bar-c" id="apellidosBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Usuarios con mayor interacción (likes capturados)</div><span class="sec-badge">Top 10</span></div>
+          <div class="sec-body">
+            <div class="bar-c" id="topEngBar"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Cobertura territorial</div></div>
+          <div class="sec-body">
+            <div id="zonaOverview"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head"><div class="sec-title">Crecimiento estimado de seguidores 2026</div></div>
+        <div class="sec-body">
+          <div style="display:flex;gap:20px;margin-bottom:14px;flex-wrap:wrap">
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--acc)">Ene</div><div style="font-size:11px;color:var(--t3)">~780</div></div>
+            <div style="display:flex;align-items:center;color:var(--t4);font-size:20px">→</div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--acc)">Feb</div><div style="font-size:11px;color:var(--t3)">~820</div></div>
+            <div style="display:flex;align-items:center;color:var(--t4);font-size:20px">→</div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--acc)">Mar</div><div style="font-size:11px;color:var(--t3)">~870</div></div>
+            <div style="display:flex;align-items:center;color:var(--t4);font-size:20px">→</div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--grn)">Abr</div><div style="font-size:11px;color:var(--t3)">~940</div></div>
+            <div style="display:flex;align-items:center;color:var(--t4);font-size:20px">→</div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--amb)">Jun est.</div><div style="font-size:11px;color:var(--t3)">~1.200</div></div>
+            <div style="display:flex;align-items:center;color:var(--t4);font-size:20px">→</div>
+            <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--red)">Dic est.</div><div style="font-size:11px;color:var(--t3)">~2.500–3.000</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.6">Proyección basada en ritmo actual de actividad mediática y tendencia de crecimiento de espacios políticos vecinales similares. Para alcanzar el rango top 1–2 local, el espacio necesita estrategia de contenidos sistemática.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="screen-usuarios" class="screen">
+      <div class="sec">
+        <div class="sec-head">
+          <div class="sec-title">Base de Seguidores Capturados <span class="sec-badge" id="userCount">412 registros</span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="filterTipo" onchange="renderTable()">
+              <option value="">Todos los tipos</option>
+              <option value="politico">Político</option>
+              <option value="medio">Medio de comunicación</option>
+              <option value="profesional">Profesional</option>
+              <option value="comercio">Comercio</option>
+              <option value="persona">Persona</option>
+            </select>
+            <select id="filterZona" onchange="renderTable()">
+              <option value="">Todas las zonas</option>
+              <option value="Centro">Centro</option>
+              <option value="Norte">Norte</option>
+              <option value="Sur">Sur</option>
+              <option value="Costa">Costa</option>
+              <option value="Oeste">Oeste</option>
+              <option value="Fuera">Fuera de Concordia</option>
+            </select>
+            <select id="filterEng" onchange="renderTable()">
+              <option value="">Todo engagement</option>
+              <option value="alto">Alto</option>
+              <option value="medio">Medio</option>
+              <option value="seguidor">Seguidor</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Usuario</th>
+                <th>Tipo</th>
+                <th>Zona</th>
+                <th>Engagement</th>
+                <th>Instagram</th>
+                <th>LinkedIn</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACTOS EXTRA -->
+    <div id="screen-contactos" class="screen">
+      <div class="sec">
+        <div class="sec-head">
+          <div class="sec-title">
+            Contactos Territoriales
+            <span class="sec-badge" id="contactoCount">500+ registros</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="top-search" id="contactoSearch" placeholder="Buscar por nombre o dirección…" oninput="contactoSearch=this.value;contactoPage=0;renderContactos()" style="width:260px">
+          </div>
+        </div>
+        <div style="padding:10px 18px;background:rgba(249,115,22,0.06);border-bottom:1px solid rgba(249,115,22,0.12);font-size:12px;color:var(--ora);display:flex;align-items:center;gap:8px">
+          <span>📋</span>
+          <span>Estos contactos <strong>no pertenecen a Instagram</strong> pero pueden buscarse en la plataforma mediante el botón 📷. Provienen de relevamiento territorial de Concordia.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre / Dirección</th>
+                <th>Instagram</th>
+              </tr>
+            </thead>
+            <tbody id="contactoTableBody"></tbody>
+          </table>
+        </div>
+        <div style="padding:14px 18px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center" id="contactoPagination"></div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="screen-mapa" style="display:none;height:100%">
+      <div id="mapDiv"></div>
+      <div class="map-sidebar">
+        <div class="map-top">
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">Concordia — Distribución Geográfica</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:3px">Seguidores por zona territorial</div>
+          <div class="map-filters">
+            <div class="filter-chip on" onclick="toggleMapFilter(this,'todas')">Todas</div>
+            <div class="filter-chip" onclick="toggleMapFilter(this,'politico')">Político</div>
+            <div class="filter-chip" onclick="toggleMapFilter(this,'medio')">Medios</div>
+            <div class="filter-chip" onclick="toggleMapFilter(this,'profesional')">Profesional</div>
+            <div class="filter-chip" onclick="toggleMapFilter(this,'comercio')">Comercio</div>
+            <div class="filter-chip" onclick="toggleMapFilter(this,'vecinos')" style="border-color:rgba(249,115,22,0.4);color:#f97316">🏘️ Vecinos</div>
+          </div>
+          <div id="geocodePanel" style="display:none;margin-top:10px;padding:10px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:10px">
+            <div style="font-size:11px;color:#f97316;font-weight:600;margin-bottom:6px">📍 Geocodificación de vecinos</div>
+            <div style="font-size:11px;color:#4a5070;margin-bottom:8px" id="geocodeStatus">Cargando coordenadas guardadas…</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button id="geocodeBtn" onclick="startGeocoding()" style="padding:5px 10px;border-radius:7px;font-size:11px;background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border:none;cursor:pointer;font-family:DM Sans,sans-serif">Geocodificar faltantes</button>
+              <button onclick="stopGeocoding()" style="padding:5px 10px;border-radius:7px;font-size:11px;background:#1c2238;color:#8b92b8;border:1px solid rgba(255,255,255,0.06);cursor:pointer;font-family:DM Sans,sans-serif">⏹ Detener</button>
+            </div>
+            <div style="margin-top:8px;height:4px;background:#1c2238;border-radius:2px;overflow:hidden"><div id="geocodeBar" style="height:100%;background:linear-gradient(90deg,#f97316,#ef4444);border-radius:2px;width:0%;transition:width 0.3s"></div></div>
+          </div>
+        </div>
+        <div class="map-list" id="mapList"></div>
+      </div>
+    </div>
+
+    <!-- POSTS -->
+    <div id="screen-posts" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 14px;background:rgba(34,208,122,0.06);border:1px solid rgba(34,208,122,0.15);border-radius:10px">
+        <span style="font-size:16px">✅</span>
+        <span style="font-size:12px;color:var(--grn);font-weight:500">Datos verificados:</span>
+        <span style="font-size:12px;color:var(--t2)">2 posts con métricas reales de capturas de pantalla · 3 posts con estimaciones basadas en cobertura mediática</span>
+      </div>
+
+      <div class="stats-row">
+        <div class="scard" style="--cA:#22d07a;--cB:#00d4aa">
+          <div class="scard-lbl">🏆 Top post REAL</div>
+          <div class="scard-val">135</div>
+          <div class="scard-sub">Carrusel IA Estratégica — 25 feb</div>
+        </div>
+        <div class="scard" style="--cA:#4f7cff;--cB:#7c5cfc">
+          <div class="scard-lbl">2° Post REAL</div>
+          <div class="scard-val">45</div>
+          <div class="scard-sub">Reel Reforma Estructural — abr</div>
+        </div>
+        <div class="scard" style="--cA:#f59e0b;--cB:#f97316">
+          <div class="scard-lbl">Ratio likes/seg. top</div>
+          <div class="scard-val">14%</div>
+          <div class="scard-sub">135 de ~940 seguidores</div>
+        </div>
+        <div class="scard" style="--cA:#ec4899;--cB:#a855f7">
+          <div class="scard-lbl">Brecha temática</div>
+          <div class="scard-val">3x</div>
+          <div class="scard-sub">IA (135) vs político (45)</div>
+        </div>
+      </div>
+
+      <div class="posts-grid" id="postsGrid"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px">
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Insight clave: qué mueve el engagement</div></div>
+          <div class="sec-body">
+            <div style="padding:12px;background:rgba(34,208,122,0.06);border:1px solid rgba(34,208,122,0.15);border-radius:10px;margin-bottom:12px">
+              <div style="font-size:12px;font-weight:600;color:var(--grn);margin-bottom:5px">🏆 Post #1 — 135 likes: ¿Por qué funcionó?</div>
+              <div style="font-size:12px;color:var(--t2);line-height:1.6">Propuesta de valor <strong style="color:var(--t1)">concreta y gratuita</strong> (capacitación en IA sin costo). Temática de interés general transversal — no exclusivamente política. Diseño visual impactante. Llegó a audiencia fuera de la base política habitual.</div>
+            </div>
+            <div style="padding:12px;background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;margin-bottom:12px">
+              <div style="font-size:12px;font-weight:600;color:var(--acc);margin-bottom:5px">2° Post — 45 likes: Patrón diferente</div>
+              <div style="font-size:12px;color:var(--t2);line-height:1.6">Reel con <strong style="color:var(--t1)">referente femenino en cámara</strong> (Vicepresidenta del Partido Lic. Silvia Dri). Los comentarios son todos reacciones positivas con emojis 👏. Audiencia militante consolidada pero alcance más limitado.</div>
+            </div>
+            <div style="padding:12px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px">
+              <div style="font-size:12px;font-weight:600;color:var(--amb);margin-bottom:5px">⚠️ Conclusión crítica</div>
+              <div style="font-size:12px;color:var(--t2);line-height:1.6">La <strong style="color:var(--t1)">brecha de 3x entre posts</strong> indica que el contenido político-técnico no logra alcanzar audiencias fuera de la base. El contenido de servicio/capacitación rompe esa barrera. Replicar el modelo del post de IA con otros temas ciudadanos.</div>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Análisis de tipo de contenido (datos reales)</div></div>
+          <div class="sec-body">
+            <div class="bar-c" style="margin-bottom:14px">
+              <div class="bar-r"><div class="bar-lbl">Carrusel (IA)</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#22d07a,#00d4aa)">135 likes ✓</div></div><div class="bar-n">REAL</div></div>
+              <div class="bar-r"><div class="bar-lbl">Reel (político)</div><div class="bar-track"><div class="bar-fill" style="width:33%;background:linear-gradient(90deg,#4f7cff,#7c5cfc)">45 likes ✓</div></div><div class="bar-n">REAL</div></div>
+              <div class="bar-r"><div class="bar-lbl">Comunicado IG</div><div class="bar-track"><div class="bar-fill" style="width:20%;background:linear-gradient(90deg,#f59e0b,#f97316)">~27 est.</div></div><div class="bar-n">est.</div></div>
+              <div class="bar-r"><div class="bar-lbl">Post técnico</div><div class="bar-track"><div class="bar-fill" style="width:12%;background:linear-gradient(90deg,#a855f7,#ec4899)">~16 est.</div></div><div class="bar-n">est.</div></div>
+            </div>
+            <div style="padding:12px;background:var(--s2);border-radius:10px;font-size:12px;color:var(--t2);line-height:1.6">
+              <strong style="color:var(--acc)">Recomendación basada en datos reales:</strong><br>
+              1. Replicar el formato del post de IA con otros cursos/capacitaciones gratuitas.<br>
+              2. Los Reels con referentes visibles en cámara generan respuesta emocional.<br>
+              3. Los carruseles con diseño profesional e impacto visual claro superan a los comunicados técnicos en IG.<br>
+              4. El hashtag <span style="color:var(--acc)">#destacar</span> aparece en ambos posts top — mantenerlo.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFORME -->
+    <div id="screen-informe" class="screen">
+      <div class="stats-row">
+        <div class="scard" style="--cA:#22d07a;--cB:#00d4aa">
+          <div class="scard-lbl">Actividad mediática</div>
+          <div class="scard-val">Alta</div>
+          <div class="scard-sub">13 medios cubiertos / trim.</div>
+        </div>
+        <div class="scard" style="--cA:#4f7cff;--cB:#7c5cfc">
+          <div class="scard-lbl">Posición digital</div>
+          <div class="scard-val">2°/3°</div>
+          <div class="scard-sub">Espacio vecinal local</div>
+        </div>
+        <div class="scard" style="--cA:#f59e0b;--cB:#f97316">
+          <div class="scard-lbl">Vulnerabilidad</div>
+          <div class="scard-val">Media</div>
+          <div class="scard-sub">Controversia laboral</div>
+        </div>
+        <div class="scard" style="--cA:#ec4899;--cB:#a855f7">
+          <div class="scard-lbl">Proyección 12 meses</div>
+          <div class="scard-val">Top 1</div>
+          <div class="scard-sub">Con estrategia activa</div>
+        </div>
+      </div>
+
+      <div class="informe-grid">
+        <div class="info-card">
+          <div class="info-title">📊 Diagnóstico digital actual</div>
+          <div class="info-p">Compromiso por Concordia tiene <strong style="color:var(--t1)">940 seguidores</strong> en Instagram al cierre del período analizado. Este número es modesto en términos absolutos pero significativo para un partido vecinal con personería obtenida en diciembre de 2025.</div>
+          <div class="info-p">El modelo comunicacional se basa en <strong style="color:var(--t1)">comunicados técnicos amplificados por medios</strong>, no en presencia personal activa. Esto da visibilidad institucional pero limita la interacción directa con ciudadanos.</div>
+          <div class="info-p">Los picos de búsqueda en Google (<strong style="color:var(--acc)">1.000–3.000/mes</strong>) se correlacionan con episodios de conflicto, no con propuestas técnicas. Esto implica que la audiencia responde más a la controversia que al contenido programático.</div>
+          <div class="meter-block" style="margin-top:12px">
+            <div class="meter-lbl"><span>Visibilidad local</span><span style="color:var(--grn)">72%</span></div>
+            <div class="meter-track"><div class="meter-fill" style="width:72%;background:linear-gradient(90deg,var(--grn),var(--acc3))"></div></div>
+          </div>
+          <div class="meter-block">
+            <div class="meter-lbl"><span>Comunidad propia</span><span style="color:var(--amb)">28%</span></div>
+            <div class="meter-track"><div class="meter-fill" style="width:28%;background:linear-gradient(90deg,var(--amb),var(--ora))"></div></div>
+          </div>
+          <div class="meter-block">
+            <div class="meter-lbl"><span>Alcance audiovisual</span><span style="color:var(--red)">15%</span></div>
+            <div class="meter-track"><div class="meter-fill" style="width:15%;background:linear-gradient(90deg,var(--red),var(--pink))"></div></div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-title">🎯 Oportunidades estratégicas</div>
+          <div class="recom-item">
+            <div class="recom-num">01</div>
+            <div>
+              <div class="recom-title">Dato de transparencia municipal</div>
+              <div class="recom-text">Concordia cayó del 3° al 16° puesto en rankings nacionales de transparencia (IERAL/Fdn. Mediterránea). Este dato tiene <strong style="color:var(--amb)">alto potencial viral</strong> si se comunica con infografías accesibles y casos cotidianos.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">02</div>
+            <div>
+              <div class="recom-title">Seguidores de alta influencia</div>
+              <div class="recom-text">Diario Concordia, Gustavo Cardozo (periodista verificado), BebaWine Sommelier (verificado) y otros influencers locales ya siguen la cuenta. Activar colaboraciones con ellos puede multiplicar el alcance sin costo.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">03</div>
+            <div>
+              <div class="recom-title">El post de IA lo confirma: el servicio supera a la política</div>
+              <div class="recom-text">El post de mayor engagement real (<strong style="color:var(--grn)">135 likes</strong>) fue una capacitación gratuita en IA — no un comunicado político. Esto prueba que el contenido de servicio ciudadano multiplica el alcance. Replicar con: alfabetización digital, derechos del consumidor, trámites municipales, transparencia presupuestaria en lenguaje accesible.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">04</div>
+            <div>
+              <div class="recom-title">Segmento profesional</div>
+              <div class="recom-text">28 cuentas identificadas como comercios/servicios locales y 15+ profesionales independientes. Este segmento valora la transparencia fiscal y puede convertirse en base electoral orgánica.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" style="margin-bottom:14px">
+        <div class="sec-head"><div class="sec-title">📋 Cronología de actividad pública — Enero–Abril 2026</div></div>
+        <div class="sec-body">
+          <div id="timelineContainer"></div>
+        </div>
+      </div>
+
+      <div class="informe-grid">
+        <div class="info-card">
+          <div class="info-title">⚠️ Vulnerabilidades reputacionales</div>
+          <div class="recom-item">
+            <div>
+              <div class="recom-title" style="color:var(--red)">Controversia laboral (episodio Sastre)</div>
+              <div class="recom-text">El cruce con el concejal Sastre sobre la situación municipal dejó a Sierra "técnicamente documentado pero públicamente expuesto". La respuesta fue formal y correcta, pero el episodio generó el pico de búsquedas más alto del período.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div>
+              <div class="recom-title" style="color:var(--amb)">Coherencia histórica — ex gestión Cresto</div>
+              <div class="recom-text">Sectores del oficialismo y medios opositores señalan contradicción entre las propuestas actuales y la trayectoria como Secretario de Hacienda (2015–2023). Este flanco requiere narrativa proactiva clara.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div>
+              <div class="recom-title" style="color:var(--amb)">Fractura interna visible</div>
+              <div class="recom-text">El episodio de la Banca del Pueblo con comunicado disidente fue interpretado por medios como fractura de conducción. La unidad interna debe ser comunicada activamente.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-title">🚀 Plan de acción digital recomendado</div>
+          <div class="recom-item">
+            <div class="recom-num">A</div>
+            <div>
+              <div class="recom-title">Contenido audiovisual propio (urgente)</div>
+              <div class="recom-text">Crear serie de Reels "Explicado por Sierra": 60 seg. sobre cada propuesta legislativa. La deuda más evidente de la estrategia actual. Objetivo: 3 reels/semana.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">B</div>
+            <div>
+              <div class="recom-title">Activación de seguidores influyentes</div>
+              <div class="recom-text">Contacto directo con Diario Concordia, Gustavo Cardozo, periodistas verificados y comercios ya seguidores para generar coberturas específicas. Publicar entre 20:00 y 22:00 todos los días.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">C</div>
+            <div>
+              <div class="recom-title">Campaña "Del 3° al 16°"</div>
+              <div class="recom-text">Aprovechar el dato de caída en transparencia como eje narrativo central de los próximos 60 días. Infografías, encuestas en Stories, testimonios ciudadanos.</div>
+            </div>
+          </div>
+          <div class="recom-item">
+            <div class="recom-num">D</div>
+            <div>
+              <div class="recom-title">Objetivo: 2.500 seguidores antes de campaña</div>
+              <div class="recom-text">Con la estrategia correcta, es alcanzable posicionarse como 1° o 2° espacio vecinal digital de Concordia antes del inicio del ciclo electoral.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIERRA PROFILE -->
+    <div id="screen-sierra" class="screen">
+      <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px">
+        <div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--s3),var(--s4));border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:var(--acc);font-family:'Syne',sans-serif;flex-shrink:0">AS</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">Cr. Álvaro Enrique Sierra</div>
+          <div style="font-size:13px;color:var(--t3);margin-top:4px">Contador Público Nacional · Fundador y Coordinador General — Compromiso por Concordia</div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <span class="badge bp">Político vecinal</span>
+            <span class="badge bb">Técnico fiscal</span>
+            <span class="badge ba">Ex Sec. de Hacienda</span>
+            <a href="https://www.instagram.com/cralvarosierra" target="_blank" class="ig-link">📷 @cralvarosierra</a>
+            <a href="https://www.linkedin.com/search/results/all/?keywords=Alvaro+Sierra+Concordia+Entre+Rios+Contador" target="_blank" class="li-link">🔗 LinkedIn</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="informe-grid">
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Perfil Digital</div></div>
+          <div class="sec-body">
+            <div class="fgrid" style="margin-bottom:12px">
+              <div class="fld"><div class="fld-lbl">Seguidores IG (institucional)</div><div class="fld-val">~940</div></div>
+              <div class="fld"><div class="fld-lbl">Búsquedas Google/mes</div><div class="fld-val">200–3.000</div></div>
+              <div class="fld"><div class="fld-lbl">Medios que lo cubren</div><div class="fld-val">13 medios</div></div>
+              <div class="fld"><div class="fld-lbl">Proyección seguidores</div><div class="fld-val">Top 1–2 local</div></div>
+              <div class="fld"><div class="fld-lbl">Perfil personal verificado</div><div class="fld-val" style="color:var(--red)">No confirmado</div></div>
+              <div class="fld"><div class="fld-lbl">Cuenta institucional</div><div class="fld-val" style="color:var(--grn)">@compromisoporconordia</div></div>
+            </div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.7">Su impacto digital es <strong style="color:var(--t1)">predominantemente indirecto</strong>: comunicados técnicos → medios → redes de los medios → comentarios ciudadanos. Sin perfil propio activo en redes personales verificado.</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><div class="sec-title">Análisis de tono comunicacional</div></div>
+          <div class="sec-body">
+            <div class="meter-block">
+              <div class="meter-lbl"><span>Densidad técnica</span><span style="color:var(--acc)">92%</span></div>
+              <div class="meter-track"><div class="meter-fill" style="width:92%;background:linear-gradient(90deg,var(--acc),var(--acc2))"></div></div>
+            </div>
+            <div class="meter-block">
+              <div class="meter-lbl"><span>Confrontación directa</span><span style="color:var(--amb)">35%</span></div>
+              <div class="meter-track"><div class="meter-fill" style="width:35%;background:linear-gradient(90deg,var(--amb),var(--ora))"></div></div>
+            </div>
+            <div class="meter-block">
+              <div class="meter-lbl"><span>Cercanía ciudadana</span><span style="color:var(--red)">28%</span></div>
+              <div class="meter-track"><div class="meter-fill" style="width:28%;background:linear-gradient(90deg,var(--red),var(--pink))"></div></div>
+            </div>
+            <div class="meter-block">
+              <div class="meter-lbl"><span>Presencia audiovisual</span><span style="color:var(--red)">12%</span></div>
+              <div class="meter-track"><div class="meter-fill" style="width:12%;background:linear-gradient(90deg,var(--red),var(--amb))"></div></div>
+            </div>
+            <div class="meter-block">
+              <div class="meter-lbl"><span>Cobertura mediática</span><span style="color:var(--grn)">85%</span></div>
+              <div class="meter-track"><div class="meter-fill" style="width:85%;background:linear-gradient(90deg,var(--grn),var(--acc3))"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-name" id="modalName"></div><div class="modal-sub" id="modalSub"></div></div>
+      <div class="mclose" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-hd-info">
+      <div id="modalAvatar"></div>
+      <div style="flex:1">
+        <div class="soc-row" id="modalLinks"></div>
+        <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap" id="modalBadges"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="msec">
+        <div class="msec-title">Datos del perfil</div>
+        <div class="fgrid" id="modalFields"></div>
+      </div>
+      <div class="msec">
+        <div class="msec-title">Actividad en posts analizados</div>
+        <div id="modalActivity" style="font-size:13px;color:var(--t2);line-height:1.7"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const USERS = [
+  // POLÍTICOS Y REFERENTES
+  {h:'cralvarosierra',n:'Cr Alvaro Sierra',t:'politico',z:'Centro',b:'Centro Cívico',eng:10,likes:5,desc:'Fundador CPC, Contador Público, ex Sec. Hacienda'},
+  {h:'lapiduzpablo',n:'Pablo Lapiduz',t:'politico',z:'Centro',b:'Centro',eng:9,likes:4,desc:'Referente CPC, firmante comunicados técnicos'},
+  {h:'pablo_lapiduz',n:'Pablo Lapiduz',t:'politico',z:'Centro',b:'Centro',eng:9,likes:4,desc:'Cuenta alternativa — mismo referente CPC'},
+  {h:'martindenisconcordia',n:'Martin Denis',t:'politico',z:'Centro',b:'Centro',eng:7,likes:2,desc:'Referente político local Concordia'},
+  {h:'martinvera_k',n:'Martín Vera',t:'politico',z:'Norte',b:'Villa del Parque',eng:6,likes:2,desc:'Figura política local'},
+  {h:'marianosalinasg',n:'Mariano Salinas',t:'politico',z:'Norte',b:'Barrio Norte',eng:5,likes:1,desc:'Referente político local'},
+  {h:'longo_guido_augusto',n:'Guido Longo',t:'politico',z:'Centro',b:'Centro',eng:7,likes:3,desc:'Figura política verificada en publicaciones'},
+  {h:'guillesatalia',n:'Guillermo Satalía Méndez',t:'politico',z:'Centro',b:'Centro Cívico',eng:8,likes:3,desc:'Verificado IG — figura política Entre Ríos',verified:true},
+  {h:'fedesierra1',n:'Fede Sierra',t:'politico',z:'Centro',b:'Centro',eng:8,likes:5,desc:'Familiar/allegado al espacio — alta interacción'},
+  {h:'santisierra10',n:'Santi Sierra',t:'politico',z:'Centro',b:'Centro',eng:5,likes:2,desc:'Relacionado con el espacio político'},
+
+  // MEDIOS DE COMUNICACIÓN
+  {h:'diarioconcordia',n:'Diario Concordia',t:'medio',z:'Centro',b:'Centro',eng:10,likes:5,desc:'Principal diario digital de Concordia',verified:true},
+  {h:'diarioverdadconcordia',n:'Diario Verdad Concordia',t:'medio',z:'Centro',b:'Centro',eng:8,likes:3,desc:'Medio digital local'},
+  {h:'concordia24noticias',n:'Concordia 24',t:'medio',z:'Centro',b:'Centro',eng:8,likes:3,desc:'Portal de noticias local'},
+  {h:'fedegularte',n:'Fede Gularte Periodista',t:'medio',z:'Centro',b:'Villa del Parque',eng:9,likes:4,desc:'Periodista local Concordia'},
+  {h:'gustavocardozo.prensa',n:'Gustavo Cardozo',t:'medio',z:'Norte',b:'Barrio Norte',eng:9,likes:4,desc:'Periodista verificado IG',verified:true},
+  {h:'megusta.prensa',n:'Me Gusta Prensa',t:'medio',z:'Centro',b:'Centro',eng:7,likes:3,desc:'Productora y servicios de prensa'},
+  {h:'sergio.marchiano',n:'Sergio Marchiano',t:'medio',z:'Norte',b:'Barrio Norte',eng:6,likes:3,desc:'Fotógrafo / periodista local'},
+  {h:'joseluisbogado',n:'Jose Luis Bogado',t:'medio',z:'Centro',b:'Centro',eng:7,likes:3,desc:'Figura mediática local, alta interacción en posts'},
+
+  // PROFESIONALES
+  {h:'nicolas_robertone',n:'Nicolás J. Robertone',t:'profesional',z:'Oeste',b:'Las Quintas',eng:7,likes:2,desc:'Kinesiólogo — perfil profesional'},
+  {h:'damianaurruzola',n:'Damiana Urruzola',t:'profesional',z:'Norte',b:'Villa del Parque',eng:7,likes:3,desc:'Coach Ontológico & PNL'},
+  {h:'yanezdianacp',n:'Diana Yañez',t:'profesional',z:'Centro',b:'Centro',eng:8,likes:3,desc:'Contadora Pública — referente profesional'},
+  {h:'lorenarazzetto',n:'Lorena Razzetto',t:'profesional',z:'Norte',b:'Villa del Parque',eng:7,likes:3,desc:'Formadora Técnica Estructural'},
+  {h:'cristinafranki.reflexologia',n:'Cristina Franki',t:'profesional',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Reflexóloga'},
+  {h:'gustavojroloncoach',n:'Gustavo Javier Rolon',t:'profesional',z:'Oeste',b:'Las Quintas',eng:5,likes:1,desc:'Coach — espacio bienestar'},
+  {h:'isa.aura.yoga',n:'Maria Isabel Fernandez',t:'profesional',z:'Costa',b:'Costanera',eng:5,likes:1,desc:'Yoga y lectura de aura'},
+  {h:'centro_esmeralda_terapias',n:'Centro Esmeralda',t:'profesional',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Centro terapéutico'},
+  {h:'nazka_arquitectura',n:'NAZKA Arquitectura',t:'profesional',z:'Centro',b:'Centro',eng:6,likes:2,desc:'Estudio arquitectura'},
+  {h:'soldigital90',n:'Sol Cabello Marketing',t:'profesional',z:'Centro',b:'Centro',eng:6,likes:2,desc:'Marketing digital'},
+
+  // COMERCIOS LOCALES
+  {h:'bebawine_',n:'BebaWine Sommelier',t:'comercio',z:'Costa',b:'Costanera',eng:7,likes:2,desc:'Sommelier verificada IG — influencer local',verified:true},
+  {h:'clarimica.intimates',n:'Clarimica Lencería',t:'comercio',z:'Centro',b:'Centro',eng:6,likes:2,desc:'Lencería femenina'},
+  {h:'maluu_indumentariaybordados',n:'MALUU Indumentaria',t:'comercio',z:'Sur',b:'Barrio Sur',eng:5,likes:1,desc:'Indumentaria y bordados'},
+  {h:'blancosytaconesshowroom',n:'Blancos y Tacones',t:'comercio',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Showroom de ropa'},
+  {h:'cp__deco',n:'Cecilia Peralta Cestería',t:'comercio',z:'Oeste',b:'Las Quintas',eng:6,likes:2,desc:'Cestería nórdica, deco y cursos'},
+  {h:'entreastillasyvirutas',n:'Entre Astillas y Virutas',t:'comercio',z:'Oeste',b:'Parque Industrial',eng:5,likes:1,desc:'Artesanías en madera'},
+  {h:'restohugoyfelix',n:'Hugo & Felix Resto',t:'comercio',z:'Costa',b:'Costanera',eng:6,likes:2,desc:'Restaurante Concordia'},
+  {h:'almacen.de.deco',n:'Almacén de Deco',t:'comercio',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Decoración del hogar'},
+  {h:'turismolaspalmasok',n:'Turismo Las Palmas',t:'comercio',z:'Costa',b:'Costanera',eng:6,likes:2,desc:'Agencia de turismo local'},
+  {h:'imcembalajes',n:'IMC Embalajes',t:'comercio',z:'Oeste',b:'Parque Industrial',eng:5,likes:1,desc:'Embalajes industriales'},
+  {h:'concordia.web',n:'Tu Web Profesional',t:'comercio',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Agencia web local'},
+  {h:'agusthea2025',n:'Dolce Vita',t:'comercio',z:'Centro',b:'Centro',eng:4,likes:1,desc:'Gastronomía local'},
+  {h:'jafar.fragancias',n:'Jafar Fragancias',t:'comercio',z:'Centro',b:'Centro',eng:4,likes:1,desc:'Perfumería importada'},
+  {h:'barberia_luchoo',n:'Lucho Romero Barbería',t:'comercio',z:'Norte',b:'Villa del Parque',eng:4,likes:1,desc:'Barbería'},
+  {h:'mora.lenceria',n:'Mora Lencería',t:'comercio',z:'Centro',b:'Centro',eng:4,likes:1,desc:'Lencería'},
+  {h:'elatril.espaciodearte',n:'El Atril Espacio de Arte',t:'comercio',z:'Centro',b:'Centro',eng:5,likes:1,desc:'Galería de arte local'},
+
+  // PERSONAS — alta interacción
+  {h:'furlongguillermo16',n:'Guillermo Ezequiel Furlong',t:'persona',z:'Norte',b:'Villa del Parque',eng:6,likes:2},
+  {h:'exequielimbelloni',n:'Exequiel Imbelloni',t:'persona',z:'Centro',b:'Centro',eng:5,likes:2},
+  {h:'fernandobelottini',n:'Fernando Belottini',t:'persona',z:'Norte',b:'Barrio Norte',eng:5,likes:1},
+  {h:'pablobentos',n:'Pablo Bentos',t:'persona',z:'Sur',b:'Barrio Sur',eng:5,likes:1},
+  {h:'soniabentos',n:'Sonia Bentos',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'andrinivictor',n:'Victor Andrini',t:'persona',z:'Norte',b:'Barrio Norte',eng:7,likes:4,desc:'Alta interacción — aparece en múltiples posts'},
+  {h:'patandrini',n:'Patricia Andrini',t:'persona',z:'Norte',b:'Barrio Norte',eng:5,likes:2,desc:'Familia Andrini — presencia frecuente'},
+  {h:'maguiandrini',n:'Magui Andrini',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'gabriel.ruchinsky',n:'Gabriel Ruchinsky',t:'persona',z:'Centro',b:'Centro',eng:6,likes:2},
+  {h:'vonzellheim',n:'Guillo Von Zellheim',t:'persona',z:'Centro',b:'Centro',eng:5,likes:1},
+  {h:'marianobettendorff',n:'Mariano González Bettendorff',t:'persona',z:'Norte',b:'Barrio Norte',eng:6,likes:3},
+  {h:'leonardovoscoboinik',n:'Leonardo Voscoboinik',t:'persona',z:'Norte',b:'Barrio Norte',eng:5,likes:1},
+  {h:'carubiaca',n:'Carlos A. Carubia',t:'persona',z:'Centro',b:'Centro',eng:5,likes:1},
+  {h:'joserolon.labiblioteca',n:'Jose Rolon',t:'persona',z:'Centro',b:'Centro',eng:5,likes:2},
+  {h:'exepei',n:'Exequiel Peichotto',t:'persona',z:'Oeste',b:'Las Quintas',eng:4,likes:1},
+  {h:'diegotedorfman',n:'Diego Dorfman',t:'persona',z:'Centro',b:'Centro',eng:5,likes:1},
+  {h:'joniconjota',n:'Jonathan Nieto',t:'persona',z:'Sur',b:'Barrio Sur',eng:5,likes:2},
+  {h:'martin_colicelli',n:'Martin Colicelli',t:'persona',z:'Norte',b:'Villa del Parque',eng:6,likes:3},
+  {h:'antocolicelli',n:'Anto Colicelli',t:'persona',z:'Norte',b:'Villa del Parque',eng:5,likes:1},
+  {h:'maxicaballero89',n:'Maxi Caballero',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'guadalupeponcebentin',n:'Guadalupe Ponce',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'mariatorres3738',n:'Maria Torres',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'silvina.gracielatorres',n:'Silvina Graciela Torres',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'leonelg_ok',n:'Leo Giles',t:'persona',z:'Oeste',b:'Las Quintas',eng:5,likes:2},
+  {h:'alejandracassella',n:'Alejandra Cassella',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'cachomiranda80',n:'Horacio Cacho Miranda',t:'persona',z:'Costa',b:'Costanera',eng:5,likes:1},
+  {h:'fabibusta63',n:'Fabián Bustamante',t:'persona',z:'Sur',b:'Barrio Sur',eng:5,likes:2},
+  {h:'fabianbustamante63',n:'Fabian Bustamante',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'dalzottodario',n:'Dario Dalzotto',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'juanpablo_dalzotto',n:'Juampi Dalzotto',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'hectordanielcapra',n:'Hector Daniel Capra',t:'persona',z:'Norte',b:'Villa del Parque',eng:4,likes:1},
+  {h:'luismengeon',n:'Luis Ramón Mengeón',t:'persona',z:'Oeste',b:'Las Quintas',eng:4,likes:1},
+  {h:'marianosalinasg',n:'Mariano Salinas',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'eugepelirroja',n:'Maria Eugenia Castrignano',t:'persona',z:'Norte',b:'Villa del Parque',eng:4,likes:1},
+  {h:'franciscoramoniriarte',n:'Francisco Ramón Iriarte',t:'persona',z:'Centro',b:'Centro',eng:5,likes:2},
+  {h:'estelamaris1970',n:'Estela Maris Ojeda',t:'persona',z:'Centro',b:'Centro',eng:5,likes:2},
+  {h:'marianacaroliname',n:'Mariana Melgar',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'evelyngallinger',n:'Evelyn Gallinger',t:'persona',z:'Norte',b:'Barrio Norte',eng:5,likes:2},
+  {h:'stellagonzalez__',n:'Stella Gonzalez',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:2},
+  {h:'pamelacoceres',n:'Pamela Coceres',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'pattoaltamirano',n:'Patto Altamirano',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'vaninasiarra',n:'Vanina Siarra',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'analiaabalosbrandon',n:'Analia Abalos Brandon',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'hector.torugo.007',n:'Hector Torugo',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'paulabrizuela80',n:'Paula Brizuela',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'vanesa.bravo.507',n:'Vanesa Bravo',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:2},
+  {h:'rosarioazambuja',n:'Maria Del Rosario Azambuja',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'mercedes.azambuja',n:'Mercedes Azambuja',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'mario.canarioo',n:'Mario Gregorio Romero',t:'persona',z:'Centro',b:'Centro',eng:5,likes:3},
+  {h:'rosi.lopez73',n:'Rosana González',t:'persona',z:'Centro',b:'Centro',eng:5,likes:3},
+  {h:'dilagiilez',n:'Dylan Luciano Giles',t:'persona',z:'Oeste',b:'Las Quintas',eng:4,likes:1},
+  {h:'silviaaliciagarran',n:'Silvia Alicia Garran',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'juanagarat',n:'Juana Garat',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'lopezjoserene032',n:'José Rene Lopez',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'laucha_pais',n:'Lautaro Pais',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'panchoescobarbond',n:'Pancho Escobar Bond',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'noriegamirabella',n:'Normi Noriega Mirabella',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'noemialbornoz_',n:'Noemi Albornoz',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'caroguerrero718',n:'Caro Guerrero',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'naza.rodriguez2',n:'Nazareno Rodriguez',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'leticiawehren22',n:'Leticia Wehren',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'nadiavaleriagonzalez',n:'Nadin Gonzalez',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'susanagironelli',n:'Susana Gironelli',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'vanina2222',n:'Vanina Ferreira',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'pablo.mart1nez',n:'Pablo Martinez',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'mariaalejandrapalazzotti',n:'Maria Alejandra Palazzotti',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'cecischaok',n:'Ceci Schauvinhold',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'marielaajandragalvani',n:'Mariela Alejandra Galvani',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'raquelrlocaso',n:'Raquel Lr',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'carmenhumere',n:'Carmen Humere',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'miriamcardozo55',n:'Miriam Eliana Cardozo',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'leonelalange',n:'Leonela Lange',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'nicolas_vinter',n:'Nicolas Blanco',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'marcecenaa',n:'Perla Manyula',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'pablux.91',n:'Pablo Percara',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'dalienrique',n:'Dalila',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'elias0602',n:'Elias Rudman',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'guilesatalia',n:'Guillermo Satalía Méndez',t:'politico',z:'Centro',b:'Centro Cívico',eng:8,likes:3,verified:true},
+  {h:'lovattoalexia',n:'Alexia Lovatto',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'mn_cbr',n:'Cbr Mariano',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'paula.molteni2',n:'Paula Molteni',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'augustodetonaok',n:'Augusto Detona',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'flavia_frigo',n:'Flavia Frigo',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'fabiolazubizarreta',n:'Fabiola Zubizarreta',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'silvia.dri',n:'Silvia Dri',t:'persona',z:'Norte',b:'Villa del Parque',eng:4,likes:2},
+  {h:'sigot.carolina',n:'Carolina Sigot',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'goyenechet',n:'Tomas Goyeneche',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'dilibio_',n:'Dilibio Andrini',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:1},
+  {h:'dalienrique',n:'Dalila',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'monicagabrielavillarreal',n:'Monica Gabriela Villarreal',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'rosariobenitez842_',n:'Rosario Benitez',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'david.benitez.332',n:'David Benitez',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'rodrigodominguez2004',n:'Rodrigo Domínguez',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'miguemurgan',n:'Migue Murgan',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'gabrielamaricelrios',n:'Gabriela Maricel Ríos',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'andresfedu86',n:'Andres Fedullo',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'natalibolanez',n:'Nati Nana',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'guardavidas_car',n:'Carlos Segovia',t:'persona',z:'Costa',b:'Costanera',eng:4,likes:1},
+  {h:'gabrielchaves039',n:'Gabriel Chaves',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'melu.nievas',n:'Melú Nievas',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'fer.garcia232',n:'Fernando Garcia',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'carubiaca',n:'Carlos A. Carubia',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'monzon6191',n:'Marisa Monzón',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'andreagonzalezokkk',n:'Andrea Gonzalez',t:'persona',z:'Centro',b:'Centro',eng:4,likes:2},
+  {h:'ana.reinaaa',n:'Ana Reina',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'ana_abalos21',n:'Ana Abalos',t:'persona',z:'Norte',b:'Barrio Norte',eng:4,likes:2},
+  {h:'danichiardola',n:'Daniela Chardola',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'elenaromero26',n:'Yamila Romero',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'floreenciasilva_',n:'Florencia Silva',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'beluupietra',n:'Belen Pietrantueno',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'joannazsolange',n:'Solange Joannaz',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'yigante_do_samba',n:'Cristian Valenzuela',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'eflores140215',n:'Eduardo Andres Flores',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'christianmazariche',n:'Christian Mazariche',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'andreaa_sequeira',n:'Andrea Sequeira',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'jeremiascavalanti',n:'Jeremias Cavalanti',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'eduardobeswick',n:'Eduardo Beswick',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'perroandaluz79',n:'Gonzalo Fochesatto',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'angelbonegodoy',n:'Angel Bone Godoy',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'pattoaltamirano',n:'Patto Altamirano',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'lucasbenitez10_',n:'Lucas Benitez',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'evavargas.ok',n:'Eva Vargas',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'gustavogomezz88',n:'Gustavo Gomez',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'valeriamedice',n:'Vale Medice',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'gustavoruizdiaz5',n:'Gustavo Ruiz Diaz',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+  {h:'martinhebrard',n:'Martin A. Hebrard',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'camila.barreto.1',n:'Cami Barreto',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:2},
+  {h:'lourdefontanari17',n:'Lourdes Fontanari',t:'persona',z:'Centro',b:'Centro',eng:4,likes:1},
+  {h:'luciano__117',n:'Luciano Slootmans',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'maraleromero79',n:'Marale Romero',t:'persona',z:'Sur',b:'Barrio Sur',eng:4,likes:1},
+  {h:'exequielsanabria',n:'Exequiel Nicolas Sanabria',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'macamorenodri',n:'Maca Moreno Dri',t:'persona',z:'Norte',b:'Villa del Parque',eng:4,likes:2},
+  {h:'elias0602',n:'Elias Rudman',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'exequielspinelli',n:'Exequiel Spinelli',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'martinfrancou',n:'Martín Francou',t:'persona',z:'Norte',b:'Barrio Norte',eng:3,likes:1},
+  {h:'juananechegoyen',n:'Juan Andres Echegoyen',t:'persona',z:'Centro',b:'Centro',eng:3,likes:1},
+  {h:'piscis100x100',n:'Nadia S Carlini',t:'persona',z:'Sur',b:'Barrio Sur',eng:3,likes:1},
+];
+
+// Remove duplicates
+const seen = new Set();
+const DB = USERS.filter(u => { if(seen.has(u.h)) return false; seen.add(u.h); return true; });
+
+const TIPO_COLORS = {
+  politico:'var(--red)',
+  medio:'var(--pink)',
+  profesional:'var(--acc)',
+  comercio:'var(--grn)',
+  persona:'var(--t2)'
+};
+const TIPO_BADGE = {
+  politico:'br',
+  medio:'bpk',
+  profesional:'bb',
+  comercio:'bg',
+  persona:'bgr'
+};
+const TIPO_LABELS = {
+  politico:'Político',
+  medio:'Medio',
+  profesional:'Profesional',
+  comercio:'Comercio',
+  persona:'Persona'
+};
+const ZONA_COORDS = {
+  'Centro':  {lat:-31.393,lng:-58.024,color:'#ec4899'},
+  'Norte':   {lat:-31.378,lng:-58.022,color:'#4f7cff'},
+  'Sur':     {lat:-31.411,lng:-58.018,color:'#22d07a'},
+  'Costa':   {lat:-31.398,lng:-57.998,color:'#f59e0b'},
+  'Oeste':   {lat:-31.395,lng:-58.042,color:'#a855f7'},
+  'Fuera':   {lat:-31.380,lng:-57.980,color:'#4a5070'},
+};
+
+// POSTS data (datos reales de capturas de pantalla)
+const POSTS = [
+  {
+    emoji:'🤖',tipo:'CARRUSEL',likes:135,comments:1,reach:'~2.8K',real:true,
+    fecha:'25 de febrero 2026',
+    titulo:'Inteligencia Artificial Estratégica',
+    caption:'Lanzamos: Inteligencia Artificial Estratégica. Un curso gratuito de 6 jornadas para entender, aplicar y aprovechar la IA de manera práctica. Capacitación 100% GRATUITA.',
+    hashtags:'#compromisoporconcordia #destacar',
+    insight:'TOP POST REAL — El contenido de formación ciudadana gratuita generó el mayor número de likes registrado. La propuesta de valor concreta (capacitación gratis) y el tema IA resonaron ampliamente más allá de la audiencia política habitual.',
+    tipo_contenido:'Carrusel gráfico con diseño impactante',
+    who:['mauricio_lowerr'],
+    commenters:['mauricio_lowerr'],
+    alcance_tipo:'Orgánico — temática de interés general'
+  },
+  {
+    emoji:'🎬',tipo:'REEL',likes:45,comments:3,reach:'~980',real:true,
+    fecha:'Hace 6 días (abril 2026)',
+    titulo:'Reforma Estructural — Acceso a la Información Pública',
+    caption:'Hoy presentamos un proyecto de ordenanza para que el acceso a la información pública sea un derecho real y efectivo en Concordia. Una Ciudad más transparente, es una ciudad con mejores instituciones, más control ciudadano y más confianza.',
+    hashtags:'#compromisoporconcordia #concordia #destacar',
+    insight:'POST REAL — Reel con la Vicepresidenta del Partido (Lic. Silvia Maria Hilda Dri) presentando el proyecto legislativo. Los comentarios son casi exclusivamente reacciones positivas con emojis (👏). El formato audiovisual con referente femenino visible genera buena respuesta.',
+    tipo_contenido:'Reel — presencia de referente institucional en cámara',
+    who:['dani6945','dalienrique','dilibio_'],
+    commenters:['dani6945','dalienrique','dilibio_'],
+    alcance_tipo:'Orgánico — audiencia militante base'
+  },
+  {
+    emoji:'📋',tipo:'CARRUSEL',likes:null,comments:null,reach:'estimado',real:false,
+    fecha:'Estimado',
+    titulo:'Propuesta Carta Orgánica Municipal',
+    caption:'Concordia tiene derecho a su propia Carta Orgánica desde 2008. El proceso constituyente cuesta <1% del presupuesto municipal.',
+    hashtags:'#compromisoporconcordia #concordia',
+    insight:'Post técnico legislativo. Según el informe, los comunicados de este tipo generan alta cobertura mediática pero baja interacción directa en redes. Se estima engagement bajo en IG pero con réplica en medios locales.',
+    tipo_contenido:'Carrusel técnico informativo',
+    who:['pablo_lapiduz','cralvarosierra','yanezdianacp'],
+    commenters:[],
+    alcance_tipo:'Mediado — amplificado por prensa'
+  },
+  {
+    emoji:'📋',tipo:'CARRUSEL',likes:null,comments:null,reach:'estimado',real:false,
+    fecha:'Estimado',
+    titulo:'Entes Autárquicos — Propuesta de Disolución',
+    caption:'InVyTAM y Ente del Aeropuerto: propuesta de disolución con plan de transición jurídica y protección laboral.',
+    hashtags:'#compromisoporconcordia #concordia',
+    insight:'Post de propuesta técnica con respaldo de más de 100 firmas ciudadanas. Generó cobertura en Diario Concordia. Engagement estimado moderado por tratarse de tema técnico/administrativo.',
+    tipo_contenido:'Carrusel / comunicado institucional',
+    who:['joserolon.labiblioteca','martin_colicelli','andrinivictor'],
+    commenters:[],
+    alcance_tipo:'Mediado — audiencia técnica y política'
+  },
+  {
+    emoji:'⚖️',tipo:'REEL',likes:null,comments:null,reach:'estimado',real:false,
+    fecha:'Estimado — Marzo 2026',
+    titulo:'Defensa inspectores municipales Cabrera y Uranga',
+    caption:'Gilda Cabrera y Santiago Uranga, con 25 años de antigüedad, fueron separados tras labrar un acta correcta. Posible abuso de autoridad art. 248 CP.',
+    hashtags:'#compromisoporconcordia #concordia',
+    insight:'Según el informe, fue el contenido de mayor circulación orgánica del período — reproducido íntegramente por múltiples medios. Alta empatía ciudadana. Estimamos el mayor engagement proporcional de todos los comunicados.',
+    tipo_contenido:'Comunicado audiovisual con referencia penal',
+    who:['andrinivictor','mario.canarioo','rosi.lopez73','diarioconcordia','fedesierra1'],
+    commenters:[],
+    alcance_tipo:'Viral local — alta empatía ciudadana'
+  },
+];
+
+const TIMELINE = [
+  {date:'Dic 2025',event:'El Tribunal Electoral de ER otorga personería jurídica definitiva a Compromiso por Concordia',source:'El Heraldo / Diario Junio',cat:'Institucional'},
+  {date:'Ene 2026',event:'Presentación del proyecto para convocar Convención Municipal Constituyente — Carta Orgánica',source:'El Heraldo / Diauno / El Entre Ríos',cat:'Propuesta legislativa'},
+  {date:'Feb 2026',event:'Sierra aclara impacto económico: costo del proceso constituyente <1% del presupuesto municipal',source:'Diario Concordia / Diario del Sur',cat:'Propuesta legislativa'},
+  {date:'Feb 2026',event:'Pedido de Banca del Pueblo para disolver entes autárquicos — más de 100 firmas ciudadanas',source:'Diario Concordia',cat:'Propuesta legislativa'},
+  {date:'Feb 2026',event:'Cruce con concejal Sastre — exposición pública de situación laboral de Sierra',source:'7Páginas / Análisis Litoral',cat:'Conflicto político'},
+  {date:'Feb 2026',event:'Comunicado disidente interno sobre Banca del Pueblo — interpretado como fractura',source:'Voz Derecha / 7Páginas',cat:'Tensión interna'},
+  {date:'Mar 2026',event:'Comunicado técnico sobre Ordenanza de Emergencia Ambiental — posible inconstitucionalidad',source:'Diario Concordia',cat:'Control legalidad'},
+  {date:'Mar 2026',event:'Sierra publica "No respondo agravios, aclaro hechos" con expediente N° 103 S/26 adjunto',source:'Diario Junio / Diario Concordia',cat:'Defensa personal'},
+  {date:'Mar 2026',event:'Comunicado en defensa de inspectores Gilda Cabrera y Santiago Uranga — art. 248 CP',source:'Diario Concordia / Diario del Sur',cat:'Defensa laboral'},
+  {date:'Abr 2026',event:'Crítica a disolución del InVyTAM: el Ejecutivo adoptó la propuesta CPC sin el plan de transición',source:'Diario Concordia / APF Digital',cat:'Control legalidad'},
+  {date:'Abr 2026',event:'Presentación del proyecto de Acceso a la Información Pública — Concordia cayó del 3° al 16° en transparencia',source:'Diario Concordia / Ciudad Satélite',cat:'Transparencia'},
+];
+
+// ===================== STATE =====================
+let mapInstance = null;
+let currentFilter = 'todas';
+
+// Vecinos geocoding state
+const VECINO_COORDS = {}; // key: index, value: {lat,lng}
+let geocodingActive = false;
+let geocodingIndex = 0;
+let vecinosMarkers = [];
+
+// ===================== SCREENS =====================
+function showScreen(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-mapa').style.display = 'none';
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const titles = {
+    overview:'Overview — Dashboard General',
+    usuarios:'Base de Seguidores Capturados',
+    mapa:'Mapa Territorial — Concordia',
+    posts:'Posts con Más Likes — Análisis de Interacciones',
+    informe:'Informe Estratégico — Plan de Acción Digital',
+    sierra:'Perfil — Cr. Álvaro Enrique Sierra',
+    contactos:'Contactos Territoriales — Relevamiento Concordia'
+  };
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+
+  if(el) el.classList.add('active');
+
+  if(id === 'mapa') {
+    document.getElementById('screen-mapa').style.display = 'flex';
+    setTimeout(initMap, 100);
+  } else {
+    const sc = document.getElementById('screen-'+id);
+    if(sc) sc.classList.add('active');
+  }
+
+  if(id === 'usuarios') renderTable();
+  if(id === 'overview') renderOverview();
+  if(id === 'posts') renderPosts();
+  if(id === 'informe') renderTimeline();
+  if(id === 'contactos') renderContactos();
+}
+
+// ===================== OVERVIEW =====================
+function renderOverview() {
+  // Tipos bar
+  const tipos = {};
+  DB.forEach(u => { tipos[u.t] = (tipos[u.t]||0)+1; });
+  const tiposEl = document.getElementById('tiposBar');
+  const tc = Object.entries(tipos).sort((a,b)=>b[1]-a[1]);
+  const tMax = tc[0]?.[1]||1;
+  tiposEl.innerHTML = tc.map(([t,v])=>`
+    <div class="bar-r">
+      <div class="bar-lbl">${TIPO_LABELS[t]||t}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/tMax*100)}%;background:${TIPO_COLORS[t]||'var(--t3)'}"> </div></div>
+      <div class="bar-n">${v}</div>
+    </div>`).join('');
+
+  // Apellidos
+  const ap = {};
+  DB.forEach(u => {
+    const parts = u.n.split(' ');
+    if(parts.length>=2){ const a=parts[parts.length-1]; if(a.length>3) ap[a]=(ap[a]||0)+1; }
+  });
+  const apEl = document.getElementById('apellidosBar');
+  const sorted = Object.entries(ap).filter(([,v])=>v>1).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const aMax = sorted[0]?.[1]||1;
+  const colors=['#ec4899','#4f7cff','#22d07a','#f59e0b','#a855f7','#f97316','#00d4aa','#ef4444'];
+  apEl.innerHTML = sorted.map(([a,v],i)=>`
+    <div class="bar-r">
+      <div class="bar-lbl">${a}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/aMax*100)}%;background:${colors[i]}"> </div></div>
+      <div class="bar-n">${v}</div>
+    </div>`).join('');
+
+  // Top eng
+  const topEng = [...DB].sort((a,b)=>b.likes-a.likes).slice(0,10);
+  const teEl = document.getElementById('topEngBar');
+  const teMax = topEng[0]?.likes||1;
+  teEl.innerHTML = topEng.map(u=>`
+    <div class="bar-r">
+      <div class="bar-lbl" style="color:${TIPO_COLORS[u.t]||'var(--t2)'}">${u.n.split(' ').slice(0,2).join(' ')}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(u.likes/teMax*100)}%;background:${TIPO_COLORS[u.t]||'var(--t3)'}"> </div></div>
+      <div class="bar-n">${u.likes}</div>
+    </div>`).join('');
+
+  // Zonas
+  const zonas = {};
+  DB.forEach(u => { zonas[u.z]=(zonas[u.z]||0)+1; });
+  const zEl = document.getElementById('zonaOverview');
+  const zSorted = Object.entries(zonas).sort((a,b)=>b[1]-a[1]);
+  const zMax = zSorted[0]?.[1]||1;
+  zEl.innerHTML = zSorted.map(([z,v])=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+      <div style="width:10px;height:10px;border-radius:50%;background:${ZONA_COORDS[z]?.color||'#4a5070'};flex-shrink:0"></div>
+      <div style="font-size:12px;color:var(--t2);min-width:60px">${z}</div>
+      <div style="flex:1;height:6px;background:var(--s2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(v/zMax*100)}%;background:${ZONA_COORDS[z]?.color||'#4a5070'};border-radius:3px"></div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);min-width:20px">${v}</div>
+    </div>`).join('');
+}
+
+// ===================== TABLE =====================
+function getLinkedInURL(u) {
+  const q = encodeURIComponent(u.n + ' Concordia Entre Rios');
+  return `https://www.linkedin.com/search/results/all/?keywords=${q}`;
+}
+
+let tableData = DB;
+function renderTable() {
+  const tipo = document.getElementById('filterTipo')?.value||'';
+  const zona = document.getElementById('filterZona')?.value||'';
+  const eng = document.getElementById('filterEng')?.value||'';
+  const search = (document.getElementById('globalSearch')?.value||'').toLowerCase();
+
+  let data = DB.filter(u => {
+    if(tipo && u.t !== tipo) return false;
+    if(zona && u.z !== zona) return false;
+    if(search && !u.h.toLowerCase().includes(search) && !u.n.toLowerCase().includes(search)) return false;
+    if(eng) {
+      if(eng==='alto' && u.eng < 7) return false;
+      if(eng==='medio' && (u.eng < 4 || u.eng >= 7)) return false;
+      if(eng==='seguidor' && u.eng >= 4) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('userCount').textContent = data.length + ' registros';
+  const tbody = document.getElementById('userTableBody');
+  tbody.innerHTML = data.map((u,i) => {
+    const initials = u.n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const engLabel = u.eng>=7?'<span class="badge bg">Alto</span>':u.eng>=4?'<span class="badge ba">Medio</span>':'<span class="badge bgr">Seguidor</span>';
+    const verif = u.verified ? ' ✓' : '';
+    return `<tr>
+      <td style="color:var(--t4);font-size:11px">${String(i+1).padStart(3,'0')}</td>
+      <td>
+        <div class="user-cell">
+          <div class="avatar-ph">${initials}</div>
+          <div>
+            <div class="user-name">${u.n}${verif}</div>
+            <div class="user-handle">@${u.h}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge ${TIPO_BADGE[u.t]}">${TIPO_LABELS[u.t]}</span></td>
+      <td style="color:${ZONA_COORDS[u.z]?.color||'var(--t3)'}">📍 ${u.z}</td>
+      <td>${engLabel}</td>
+      <td><a href="https://instagram.com/${u.h}" target="_blank" class="ig-link">📷 IG</a></td>
+      <td><a href="${getLinkedInURL(u)}" target="_blank" class="li-link">🔗 LI</a></td>
+      <td><button class="top-btn btn-ghost btn-sm" onclick='openModal(${i},"${u.h}")'>Ver perfil</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function globalFilter(v) {
+  renderTable();
+}
+
+// ===================== MODAL =====================
+function openModal(idx, handle) {
+  const data = DB.filter(u => {
+    const search = (document.getElementById('globalSearch')?.value||'').toLowerCase();
+    const tipo = document.getElementById('filterTipo')?.value||'';
+    const zona = document.getElementById('filterZona')?.value||'';
+    const eng = document.getElementById('filterEng')?.value||'';
+    if(tipo && u.t !== tipo) return false;
+    if(zona && u.z !== zona) return false;
+    if(search && !u.h.toLowerCase().includes(search) && !u.n.toLowerCase().includes(search)) return false;
+    if(eng) {
+      if(eng==='alto' && u.eng < 7) return false;
+      if(eng==='medio' && (u.eng < 4 || u.eng >= 7)) return false;
+      if(eng==='seguidor' && u.eng >= 4) return false;
+    }
+    return true;
+  });
+  const u = data[idx] || DB.find(x=>x.h===handle);
+  if(!u) return;
+
+  const initials = u.n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  document.getElementById('modalName').textContent = u.n + (u.verified?' ✓':'');
+  document.getElementById('modalSub').textContent = '@'+u.h + ' · ' + TIPO_LABELS[u.t] + ' · ' + (u.z||'') + (u.b?' — '+u.b:'');
+  document.getElementById('modalAvatar').innerHTML = `<div class="modal-avatar-ph">${initials}</div>`;
+  document.getElementById('modalLinks').innerHTML = `
+    <a href="https://instagram.com/${u.h}" target="_blank" class="ig-link">📷 Ver en Instagram</a>
+    <a href="${getLinkedInURL(u)}" target="_blank" class="li-link">🔗 Buscar en LinkedIn</a>`;
+  document.getElementById('modalBadges').innerHTML = `
+    <span class="badge ${TIPO_BADGE[u.t]}">${TIPO_LABELS[u.t]}</span>
+    <span class="badge" style="background:${ZONA_COORDS[u.z]?.color+'22'};color:${ZONA_COORDS[u.z]?.color||'var(--t2)'}">📍 ${u.z}</span>
+    ${u.eng>=7?'<span class="badge bg">Alta interacción</span>':u.eng>=4?'<span class="badge ba">Interacción media</span>':'<span class="badge bgr">Seguidor</span>'}
+    ${u.verified?'<span class="badge bb">Verificado IG</span>':''}`;
+  document.getElementById('modalFields').innerHTML = `
+    <div class="fld"><div class="fld-lbl">Username</div><div class="fld-val">@${u.h}</div></div>
+    <div class="fld"><div class="fld-lbl">Tipo</div><div class="fld-val">${TIPO_LABELS[u.t]}</div></div>
+    <div class="fld"><div class="fld-lbl">Zona</div><div class="fld-val">${u.z}</div></div>
+    <div class="fld"><div class="fld-lbl">Barrio</div><div class="fld-val">${u.b||'—'}</div></div>
+    <div class="fld"><div class="fld-lbl">Score engagement</div><div class="fld-val">${u.eng}/10</div></div>
+    <div class="fld"><div class="fld-lbl">Posts con like</div><div class="fld-val">${u.likes} post(s)</div></div>
+    ${u.desc?`<div class="fld" style="grid-column:span 2"><div class="fld-lbl">Descripción</div><div class="fld-val">${u.desc}</div></div>`:''}`;
+
+  const postsWithUser = POSTS.filter(p=>p.who.includes(u.h));
+  document.getElementById('modalActivity').innerHTML = postsWithUser.length
+    ? postsWithUser.map(p=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd2)">
+        <div style="font-size:20px">${p.emoji}</div>
+        <div><div style="font-size:13px;color:var(--t1);font-weight:500">${p.tipo} · ${p.likes} likes</div><div style="font-size:11px;color:var(--t3)">${p.desc}</div></div>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px">No aparece en los posts analizados de esta muestra.</div>';
+
+  document.getElementById('userModal').classList.add('open');
+}
+function closeModal() { document.getElementById('userModal').classList.remove('open'); }
+
+// ===================== MAP =====================
+function initMap() {
+  if(mapInstance) return;
+  mapInstance = L.map('mapDiv').setView([-31.393,-58.024],13);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CartoDB',maxZoom:19
+  }).addTo(mapInstance);
+
+  renderMapMarkers();
+  renderMapList();
+  updateGeocodeUI();
+}
+
+function renderMapMarkers() {
+  if(!mapInstance) return;
+  mapInstance.eachLayer(l=>{ if(l instanceof L.Marker||l instanceof L.CircleMarker) mapInstance.removeLayer(l); });
+  vecinosMarkers = [];
+
+  // IG followers (not shown when filter is 'vecinos')
+  if(currentFilter !== 'vecinos') {
+    const filtered = currentFilter==='todas' ? DB : DB.filter(u=>u.t===currentFilter);
+    filtered.forEach(u => {
+      const zc = ZONA_COORDS[u.z]||ZONA_COORDS['Fuera'];
+      const jitter = (str,r) => { let h=0; for(const c of str) h=((h<<5)-h)+c.charCodeAt(0); return ((h%100)/100*r)-(r/2); };
+      const lat = zc.lat + jitter(u.h+'lat', 0.012);
+      const lng = zc.lng + jitter(u.h+'lng', 0.018);
+      const r = u.t==='politico'?10:u.t==='medio'?9:u.eng>=7?8:5;
+      const color = TIPO_COLORS[u.t]?.replace('var(--red)','#ef4444').replace('var(--pink)','#ec4899').replace('var(--acc)','#4f7cff').replace('var(--grn)','#22d07a').replace('var(--t2)','#8b92b8') || '#8b92b8';
+      const m = L.circleMarker([lat,lng],{
+        radius:r,color:'rgba(0,0,0,0.5)',weight:1.5,fillColor:color,fillOpacity:0.85
+      }).addTo(mapInstance);
+      m.bindPopup(`<div class="pop-name">${u.n}</div>
+        <div class="pop-row"><span class="pop-lbl">Usuario</span><span class="pop-val">@${u.h}</span></div>
+        <div class="pop-row"><span class="pop-lbl">Tipo</span><span class="pop-val">${TIPO_LABELS[u.t]}</span></div>
+        <div class="pop-row"><span class="pop-lbl">Zona</span><span class="pop-val">${u.z} — ${u.b||''}</span></div>
+        <div class="pop-row"><span class="pop-lbl">Engagement</span><span class="pop-val">${u.eng}/10</span></div>
+        <a class="pop-btn" href="https://instagram.com/${u.h}" target="_blank">Ver en Instagram</a>`);
+    });
+  }
+
+  // Vecinos con coordenadas conocidas (filter 'todas' or 'vecinos')
+  if(currentFilter === 'todas' || currentFilter === 'vecinos') {
+    CONTACTOS_EXTRA.forEach((c, idx) => {
+      const coord = VECINO_COORDS[idx];
+      if(!coord) return;
+      const igQ = encodeURIComponent(c.nom + ' Concordia') + '&type=account';
+      const m = L.circleMarker([coord.lat, coord.lng], {
+        radius: 6, color:'rgba(0,0,0,0.5)', weight:1.5,
+        fillColor:'#f97316', fillOpacity:0.85
+      }).addTo(mapInstance);
+      vecinosMarkers.push(m);
+      m.bindPopup(`<div class="pop-name">${c.nom}</div>
+        <div class="pop-row"><span class="pop-lbl">Dirección</span><span class="pop-val" style="font-size:11px">${c.dir}</span></div>
+        <div class="pop-row"><span class="pop-lbl">Tipo</span><span class="pop-val" style="color:#f97316">🏘️ Vecino territorial</span></div>
+        <a class="pop-btn" href="https://www.instagram.com/explore/search/keywordSearch/?q=${igQ}" target="_blank" style="background:linear-gradient(135deg,#f97316,#ef4444)">🔍 Buscar en Instagram</a>`);
+    });
+    updateGeocodeUI();
+  }
+}
+
+function renderMapList() {
+  if(currentFilter === 'vecinos') {
+    // Show geocoded vecinos list
+    const geocoded = CONTACTOS_EXTRA.map((c,i)=>({...c,idx:i})).filter(c=>VECINO_COORDS[c.idx]);
+    const total = CONTACTOS_EXTRA.length;
+    const igQBase = (nom) => encodeURIComponent(nom + ' Concordia') + '&type=account';
+    document.getElementById('mapList').innerHTML =
+      `<div style="padding:8px 4px 4px;font-size:10px;color:#4a5070;text-transform:uppercase;letter-spacing:1px;font-weight:600">${geocoded.length} de ${total} geolocalizados</div>` +
+      geocoded.slice(0,40).map(c=>`
+      <div class="mcard" onclick="mapInstance&&mapInstance.setView([VECINO_COORDS[${c.idx}].lat,VECINO_COORDS[${c.idx}].lng],17)">
+        <div class="mcard-name" style="font-size:12px">${c.nom}</div>
+        <div class="mcard-sub">📍 ${c.dir}</div>
+        <div class="mcard-tags">
+          <a href="https://www.instagram.com/explore/search/keywordSearch/?q=${igQBase(c.nom)}" target="_blank" class="ig-link" style="font-size:10px">📷 Buscar en IG</a>
+        </div>
+      </div>`).join('') +
+      (geocoded.length > 40 ? `<div style="padding:8px;font-size:11px;color:#4a5070;text-align:center">+${geocoded.length-40} más en el mapa</div>` : '');
+    return;
+  }
+  const filtered = currentFilter==='todas' ? DB : DB.filter(u=>u.t===currentFilter);
+  const sorted = [...filtered].sort((a,b)=>b.eng-a.eng).slice(0,40);
+  document.getElementById('mapList').innerHTML = sorted.map(u=>`
+    <div class="mcard" onclick="focusUser('${u.h}')">
+      <div class="mcard-name">${u.n}</div>
+      <div class="mcard-sub">@${u.h}</div>
+      <div class="mcard-tags">
+        <span class="badge ${TIPO_BADGE[u.t]}">${TIPO_LABELS[u.t]}</span>
+        <span class="badge bgr">📍 ${u.z}</span>
+        ${u.eng>=7?'<span class="badge bg">↑ Alto</span>':''}
+      </div>
+    </div>`).join('');
+}
+
+function toggleMapFilter(el, tipo) {
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  currentFilter = tipo;
+  // Show geocode panel only for vecinos
+  const gp = document.getElementById('geocodePanel');
+  if(gp) gp.style.display = (tipo==='vecinos') ? 'block' : 'none';
+  renderMapMarkers();
+  renderMapList();
+}
+
+// Update geocode UI status
+function updateGeocodeUI() {
+  const total = CONTACTOS_EXTRA.length;
+  const done = Object.keys(VECINO_COORDS).length;
+  const status = document.getElementById('geocodeStatus');
+  const bar = document.getElementById('geocodeBar');
+  const btn = document.getElementById('geocodeBtn');
+  if(!status) return;
+  if(geocodingActive) {
+    status.textContent = `Geocodificando… ${done} de ${total} (${Math.round(done/total*100)}%)`;
+    if(btn) { btn.disabled=true; btn.textContent='Geocodificando…'; }
+  } else if(done === 0) {
+    status.textContent = `0 de ${total} geolocalizados. Presioná el botón para iniciar.`;
+    if(btn) { btn.disabled=false; btn.textContent='Geocodificar faltantes'; }
+  } else if(done < total) {
+    const faltantes = total - done;
+    status.textContent = `${done} geolocalizados · ${faltantes} pendientes`;
+    if(btn) { btn.disabled=false; btn.textContent=`Geocodificar ${faltantes} faltantes`; }
+  } else {
+    status.textContent = `✅ ${done} de ${total} geolocalizados`;
+    if(btn) { btn.disabled=true; btn.textContent='Completo'; }
+  }
+  if(bar) bar.style.width = (done/total*100)+'%';
+}
+
+let geocodingTimer = null;
+function startGeocoding() {
+  if(geocodingActive) return;
+  geocodingActive = true;
+  geocodingIndex = 0;
+  updateGeocodeUI();
+  geocodeNext();
+}
+
+function stopGeocoding() {
+  geocodingActive = false;
+  clearTimeout(geocodingTimer);
+  updateGeocodeUI();
+}
+
+async function geocodeNext() {
+  if(!geocodingActive) return;
+  // Find next un-geocoded index
+  while(geocodingIndex < CONTACTOS_EXTRA.length && VECINO_COORDS[geocodingIndex] !== undefined) {
+    geocodingIndex++;
+  }
+  if(geocodingIndex >= CONTACTOS_EXTRA.length) {
+    geocodingActive = false;
+    updateGeocodeUI();
+    if(currentFilter==='todas'||currentFilter==='vecinos') renderMapMarkers();
+    return;
+  }
+  const c = CONTACTOS_EXTRA[geocodingIndex];
+  const idx = geocodingIndex;
+  geocodingIndex++;
+  const query = encodeURIComponent(c.dir + ', Concordia, Entre Ríos, Argentina');
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`, {
+      headers:{'Accept-Language':'es'}
+    });
+    const data = await res.json();
+    if(data && data[0]) {
+      VECINO_COORDS[idx] = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    } else {
+      // mark as failed so we skip next time
+      VECINO_COORDS[idx] = null;
+    }
+  } catch(e) {
+    VECINO_COORDS[idx] = null;
+  }
+  updateGeocodeUI();
+  if(currentFilter==='todas'||currentFilter==='vecinos') renderMapMarkers();
+  // Nominatim rate limit: 1 req/sec minimum
+  geocodingTimer = setTimeout(geocodeNext, 1100);
+}
+
+function focusUser(h) {
+  const u = DB.find(x=>x.h===h);
+  if(!u||!mapInstance) return;
+  const zc = ZONA_COORDS[u.z]||ZONA_COORDS['Fuera'];
+  const jitter = (str,r)=>{ let h=0; for(const c of str) h=((h<<5)-h)+c.charCodeAt(0); return ((h%100)/100*r)-(r/2); };
+  const lat = zc.lat + jitter(h+'lat',0.012);
+  const lng = zc.lng + jitter(h+'lng',0.018);
+  mapInstance.setView([lat,lng],15);
+}
+
+// ===================== POSTS =====================
+function renderPosts() {
+  const pg = document.getElementById('postsGrid');
+  pg.innerHTML = POSTS.map((p,i)=>{
+    const likesDisplay = p.likes !== null
+      ? `<div class="post-likes">${p.likes}</div><div style="font-size:12px;color:var(--t3)">likes · ${p.comments} com.</div>`
+      : `<div class="post-likes" style="font-size:16px;color:var(--t3)">n/d</div><div style="font-size:11px;color:var(--t4)">estimado</div>`;
+    const realBadge = p.real
+      ? `<span style="font-size:10px;background:rgba(34,208,122,0.15);color:var(--grn);border:1px solid rgba(34,208,122,0.3);border-radius:4px;padding:2px 7px;font-weight:600">✓ REAL</span>`
+      : `<span style="font-size:10px;background:var(--s3);color:var(--t4);border:1px solid var(--brd2);border-radius:4px;padding:2px 7px">estimado</span>`;
+    return `<div class="post-card">
+      <div class="post-thumb">
+        <span>${p.emoji}</span>
+        <div class="post-rank">#${i+1}</div>
+      </div>
+      <div class="post-info">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+          ${realBadge}
+          <span style="font-size:10px;color:var(--t3)">${p.fecha||''}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px;line-height:1.3">${p.titulo}</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+          ${likesDisplay}
+        </div>
+        <div class="post-meta">${p.tipo} · ${p.reach}</div>
+        <div class="post-desc" style="margin-top:6px;font-size:11px;line-height:1.5;color:var(--t3)">${p.caption}</div>
+        <div style="margin-top:8px;padding:8px;background:rgba(79,124,255,0.06);border-left:2px solid var(--acc);border-radius:0 6px 6px 0">
+          <div style="font-size:11px;color:var(--t2);line-height:1.5">${p.insight}</div>
+        </div>
+        ${p.commenters&&p.commenters.length?`<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px">${p.commenters.map(h=>`<span style="font-size:10px;color:var(--pink);background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.18);border-radius:4px;padding:2px 6px">💬 @${h}</span>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== TIMELINE =====================
+function renderTimeline() {
+  const catColors = {
+    'Institucional':'var(--acc)','Propuesta legislativa':'var(--grn)','Conflicto político':'var(--red)',
+    'Tensión interna':'var(--amb)','Control legalidad':'var(--pur)','Defensa personal':'var(--t2)',
+    'Defensa laboral':'var(--pink)','Transparencia':'var(--acc3)'
+  };
+  const catBadge = {
+    'Institucional':'bb','Propuesta legislativa':'bg','Conflicto político':'br',
+    'Tensión interna':'ba','Control legalidad':'bp','Defensa personal':'bgr',
+    'Defensa laboral':'bpk','Transparencia':'bb'
+  };
+  document.getElementById('timelineContainer').innerHTML = TIMELINE.map(t=>`
+    <div class="timeline-item">
+      <div class="tl-date">${t.date}</div>
+      <div class="tl-dot2" style="background:${catColors[t.cat]||'var(--acc)'}"></div>
+      <div class="tl-content">
+        <div class="tl-event">${t.event}</div>
+        <div style="display:flex;gap:7px;margin-top:5px;flex-wrap:wrap;align-items:center">
+          <span class="badge ${catBadge[t.cat]||'bb'}">${t.cat}</span>
+          <span style="font-size:11px;color:var(--t3)">${t.source}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ===================== EXPORT =====================
+function exportCSV() {
+  const header = 'Handle,Nombre,Tipo,Zona,Barrio,Engagement,Posts con like,Instagram\n';
+  const rows = DB.map(u=>`@${u.h},"${u.n}",${TIPO_LABELS[u.t]||u.t},${u.z},${u.b||''},${u.eng},${u.likes},https://instagram.com/${u.h}`).join('\n');
+  const blob = new Blob([header+rows],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seguidores_CPC_Concordia.csv';
+  a.click();
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('userModal').addEventListener('click',e=>{ if(e.target===document.getElementById('userModal')) closeModal(); });
+  document.getElementById('loginUser').focus();
+});
+
+// ===================== LOGIN =====================
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if(u === 'fede' && p === 'setset1*') {
+    document.getElementById('loginScreen').classList.add('hidden');
+    const app = document.getElementById('appWrapper');
+    app.classList.add('visible');
+    renderOverview();
+  } else {
+    err.classList.add('show');
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+  }
+}
+
+// ===================== CONTACTOS EXTRA =====================
+const CONTACTOS_EXTRA = [
+  {dir:'Solari Sur al 1603',nom:'CRISTIAN REBOLLO'},
+  {dir:'San Jose S/N',nom:'NADIA STEFANIA SUBELDIA'},
+  {dir:'Echague 1023',nom:'SANTIAGO SATALIA'},
+  {dir:'DAMIAN P GARAT 2320',nom:'CARLOS BOVE'},
+  {dir:'PRESIDENTE ILLIA 940',nom:'MIGUEL ANTONIO MORINICO'},
+  {dir:'LOS CACTUS 3297',nom:'ROMINA SOLEDAD CASAÑAS'},
+  {dir:'GÜEMES 815',nom:'NAHUEL FIGUEROA'},
+  {dir:'PADRE CAPUCCINO Y LA VIA, TAVELLA NORTE',nom:'MIGUEL ANGEL ORTIZ'},
+  {dir:'San martin 316',nom:'SALOMON DAVID BRODSKY'},
+  {dir:'Mateo araujo 560',nom:'JOSE ANDRES COSTA'},
+  {dir:'LIEBERMAN ENTRE CONSEJAL VEIGA Y CHILE',nom:'JULIANA PABLO'},
+  {dir:'TAVELLA Y SARA NEIRA',nom:'MANUEL ALEJANDRO SALUD'},
+  {dir:'LAMADRID 976',nom:'BERNARDITA RODRIGUEZ'},
+  {dir:'Pje.Monte Caceros 1066',nom:'RAMON HORACIO GOMEZ'},
+  {dir:'Balcarce 747',nom:'JAVIER JUAN RUBEN PIÑEIRO'},
+  {dir:'Tala 1239',nom:'ESTHER ROSA VERON DE MAGALLANES'},
+  {dir:'San Martin 316',nom:'ALCIRA ROSANA GOYENECHE'},
+  {dir:'ROQUE SAENZ PENA 498',nom:'LEANDRO PABLO GARBARINO'},
+  {dir:'Vera peñalosa 1902',nom:'ERICA ESMERALDA PEREYRA'},
+  {dir:'SAN LORENZO OESTE 621',nom:'SILVINA OVELAR'},
+  {dir:'Humberto primero',nom:'MARIA PAULA SOSA'},
+  {dir:'LA ROCA ESTE ENTRE GRIMBERG Y NOGUEIRA',nom:'KAREN AILEN VARGAS'},
+  {dir:'Tratado del pilar 1029',nom:'ELBIO ALEJANDRO GIANO'},
+  {dir:'Nogueira',nom:'VIRGINIA PIEDRA BUENA'},
+  {dir:'Pirovano 475',nom:'GRACIELA OLIVERI'},
+  {dir:'Balcarce',nom:'JOSEFA FERREYRA CARMEN'},
+  {dir:'Nogueira',nom:'LUCIANO EDUARDO SANTA CRUZ'},
+  {dir:'Rocamora',nom:'FERGONZON ARNALDO AGUSTIN OZUNA'},
+  {dir:'Echague',nom:'FEDERICO TOMAS MERRO'},
+  {dir:'RICARDO ROJAS 587',nom:'LUCIA ELIZABETH ACEVEDO'},
+  {dir:'Remedios de escalada 1625',nom:'SOFIA GLADE'},
+  {dir:'San Jose S/N',nom:'ELSA SANCHEZ'},
+  {dir:'CORSODROMO DE CONCORDIA',nom:'MARTA PORSIO'},
+  {dir:'CALLE JORGE CALZA',nom:'PANIZZA INES SANCHEZ'},
+  {dir:'Del Libertador 1566',nom:'FERNANDO JAVIER GONZALEZ'},
+  {dir:'LAPRIDA 1330',nom:'JUAN BENITO CRISTALDO'},
+  {dir:'RAMON BERDUN 922, ENTRE CHILE Y PERU',nom:'DAIANA ECHENAUSI'},
+  {dir:'Urquiza',nom:'FEDERICO CARLOS STEMPELS HERNANDEZ'},
+  {dir:'Liniers 325',nom:'MARIA DE LAS MERCEDES MITIDIERI'},
+  {dir:'Tucuman 233',nom:'CARMEN AGUIRRE'},
+  {dir:'Prepublica de Brasil 783',nom:'LAURA CECILIA MEZTLER'},
+  {dir:'Brown 1520',nom:'SILVANA ESTELA BRIAND'},
+  {dir:'San Jose S/N',nom:'JUAN DOS SANTOS'},
+  {dir:'M. Araujo 848',nom:'GRISELDA NOEMI MOREN'},
+  {dir:'Sarmiento Sur 73',nom:'MONICA GRACIELA MORALES'},
+  {dir:'Rivadavia 821',nom:'SUSANA ABALOS'},
+  {dir:'Segundo Sombras y La Rioja',nom:'ADRIEL LUBEE'},
+  {dir:'Rivadavia 621',nom:'ALBERTO ROSSI'},
+  {dir:'CALLE LAPRIDA 107',nom:'FRANCISCO ALBERTO GONZALEZ'},
+  {dir:'Balcarse 658 Bis',nom:'MARTA ELENA NAVARRO'},
+  {dir:'MATEO ARAUJO 715,ENTRE MAIPU Y LUCAS GONZALEZ',nom:'ROXANA SILVINA DEBUS'},
+  {dir:'Batalla de Cepeda 1556',nom:'MARIA LAURA ALTAMIRANO'},
+  {dir:'Avenida los trabajadores',nom:'ALBERTO BENTIN'},
+  {dir:'San Jose S/N',nom:'SILVIA MEDEIRO'},
+  {dir:'11 de Noviembre 224',nom:'GABRIEL ADRIAN PEZZELATTO'},
+  {dir:'Espejo 795',nom:'LIDIA PONCE'},
+  {dir:'Andrade 138',nom:'ADRIAN DAVID BENJUYA'},
+  {dir:'De los Viñedos esquina Ituzaingo',nom:'VICTOR MAXIMILIANO ORCELLET'},
+  {dir:'MUSETTI Y PERU',nom:'LEANDRO MIGUEL VILLALBA'},
+  {dir:'Republica de Brasil 1223',nom:'MARIA GREGORIA SARCIAT'},
+  {dir:'GUEMES 172',nom:'LILIANA MORNACCO'},
+  {dir:'Avenida San Lorenzo 100',nom:'GUIDO NAHUEL DI GIOIA'},
+  {dir:'9 de Julio186',nom:'ANNA MARIA MAGRINI'},
+  {dir:'San Jose S/N',nom:'BRENDA AYALA'},
+  {dir:'Moreno 1562',nom:'CLAUDIA ROXANA BENITEZ'},
+  {dir:'Nogueira 310',nom:'RENE TOSI'},
+  {dir:'Sto. Cabral 641',nom:'RAQUEL GODOY'},
+  {dir:'Avenida Chajari 1840',nom:'WALTER DANIEL NUÑEZ'},
+  {dir:'Chajari y Av San Lorenzo',nom:'ENRIQUE MARFIL'},
+  {dir:'V. Sarsfield 1055',nom:'RAMÓN GERARDO MOSA'},
+  {dir:'montevideo 274',nom:'NANCY BEATRIZ NOBLE'},
+  {dir:'Av: Presidente Illia 380',nom:'IRIS MABEL DRI'},
+  {dir:'San Lorenzo Este 1253',nom:'SONIA RITA LANARO'},
+  {dir:'San Jose S/N',nom:'ANGELINA SANCHEZ'},
+  {dir:'SARMIENTO 419',nom:'AZUL TITO'},
+  {dir:'antonio de luque',nom:'PATRICIA SUSANA SAMPIETRO'},
+  {dir:'san juan 1179',nom:'MARIA DE LOS ANGELES GRANADO'},
+  {dir:'P.DEL CASTILLO 809',nom:'HORACIO BARBOZA'},
+  {dir:'FELICIANO 2396',nom:'TAMARA PALACIO'},
+  {dir:'tratado del pilar 64',nom:'SILVINA L. FONTANA'},
+  {dir:'Lamadrid 1739',nom:'ADRIANA BEATRIZ MARTINEZ'},
+  {dir:'MATEO ARAUJO 848',nom:'JULIAN GABRIEL BURAGLIA'},
+  {dir:'canada 490',nom:'SILVIA ANDREA FIGUEREDO'},
+  {dir:'RIVADAVIA 448',nom:'HUGO ALBERTO SAAVEDRA'},
+  {dir:'Sarmiento 549',nom:'HORACIO MARIA CADARIO'},
+  {dir:'Crisostomo Gomez y Gualeguay',nom:'EDUARDO GABRIEL PEÑALOZA'},
+  {dir:'D.P.Garat 2320',nom:'HECTOR RICARDO MEDINA'},
+  {dir:'San Lorenzo Este 1164',nom:'BENJAMINA VIERA'},
+  {dir:'ROCAMORA 873, ENTRE CHAJARI Y ROCAMORA',nom:'VICTORIA AGUSTINA MENTEGUIAGA'},
+  {dir:'Che Guevara y Augusto Niez.',nom:'MICHEL DELIGNY SPINATELLI'},
+  {dir:'Nelson Basallo 1372',nom:'ANDRES MONNA'},
+  {dir:'Humberto Primero 4916',nom:'MABEL CARDOZO'},
+  {dir:'Asunción 419',nom:'CARINA CECILIA VALERIO'},
+  {dir:'canada 492',nom:'NADIA MARIANI'},
+  {dir:'San Juan 1691',nom:'MONICA GRACIELA BERDUN'},
+  {dir:'Calle 57 y Cordoba',nom:'MARIA DEL CARMEN ARELLANO'},
+  {dir:'Mendiburu 1071',nom:'SERGIO LUCIANO FACUNDO OTT'},
+  {dir:'Brasil 330',nom:'MARISA SOLEDAD MARTINEZ'},
+  {dir:'HIPOLITO IRIGOYEN 362',nom:'MAGALI VINER'},
+  {dir:'BROWN 2935 ENTRE MUSSETI Y GATTO',nom:'MARIA NATALIA DAVANZO'},
+  {dir:'BOLIVIA 1180 ENTRE LINIERS Y ESPEJO',nom:'LAURA YOYA'},
+  {dir:'Alem 72',nom:'SILVIA YOLANDA TORRES'},
+  {dir:'Colon 948',nom:'IVANA GISELA MOIX'},
+  {dir:'COLON 1050 ESQUINA ASUNCION',nom:'JOEL BENEDICTO JESUS CARISIMO'},
+  {dir:'Tala y Republica del Paraguay',nom:'GABRIELA ALEJANDRA PIERINI'},
+  {dir:'canada 492',nom:'ROBERTO RICARDO BORGES'},
+  {dir:'Alem 207',nom:'ELENA GALARRAGA'},
+  {dir:'Las hortencias y Paula Albarracin',nom:'DORA MIRIAM CARDOZO'},
+  {dir:'CHILE ENTRE ITALIA Y SOLARI',nom:'MARIA EUGENIA RAGGIO'},
+  {dir:'BOLIVIA 936',nom:'VANINA LORENA VIVAS'},
+  {dir:'San Juan 958',nom:'DIANA ROSA LEDA CENTURION'},
+  {dir:'Alem 208',nom:'SILVIA YOLANDA ALMUZARA'},
+  {dir:'Batalla de Cepeda 325',nom:'RAMON HUMBERTO GUATTINI'},
+  {dir:'Quintana 575',nom:'LUIS MARCELO SOLANO'},
+  {dir:'FEDERACION 795',nom:'EKATERINA SOLANGE FAATH'},
+  {dir:'Carlos Pellegrini 421',nom:'CARLOS MARIA URANGA'},
+  {dir:'canada 493',nom:'RAMON BARRIOS'},
+  {dir:'Chile y Marita Lessa',nom:'JUAN JOSE SCHONFELD'},
+  {dir:'Ara Belgrano 100',nom:'MILAGROS ESTEFANIA RIVAROLA'},
+  {dir:'rivadavia 529',nom:'JUAN GUILLERMO ISSLER'},
+  {dir:'CORRIENTES 462 ENTRE COLON Y BOLIVIA',nom:'MARIA FLORENCIA BENEDETTO RODRIGUES'},
+  {dir:'bolivia 939',nom:'ANA MARIA CALDERO'},
+  {dir:'QUINTANA Y BROWN',nom:'MARIANO EZEQUIEL ENCINA'},
+  {dir:'d.p garat 2320',nom:'CARLOS ALBERTO BOVE'},
+  {dir:'avenida independencia y alvear',nom:'DIEGO ARRIOLA'},
+  {dir:'San Martin 247',nom:'MARIA JOSE ETCHEVERRY'},
+  {dir:'guemes 72',nom:'CARMEN JOSEFA MANASSSERI'},
+  {dir:'GERARDO YOYA 590',nom:'FACUNDO HARISPE'},
+  {dir:'balcarse 1255',nom:'RAUL OSCAR PAIS'},
+  {dir:'Morrogh Berna',nom:'MARIELA BURGOS'},
+  {dir:'Alem 74',nom:'LAURA MARIA ROSSETTI'},
+  {dir:'Tavella 2343',nom:'MARIA DEL CARMEN LEAL'},
+  {dir:'Damian P. Garat 1021',nom:'CARLOS RAUL MACIEL'},
+  {dir:'Lamadrid y Nestor Garat',nom:'HECTOR MIGUEL ONETTO'},
+  {dir:'6 DE CABALLERIA 1427',nom:'MARIA LAURA LILIANA LOPEZ'},
+  {dir:'Terrovas 145',nom:'MIRTA ROSA HERRERA'},
+  {dir:'Esteben Echeverria 1571',nom:'MARIA ESPERANZA KOLARIK'},
+  {dir:'Eugenio Nuñez y Domingo Cardozo',nom:'MARA BELEN DALZOTTO'},
+  {dir:'Eva Peron y Neuquen',nom:'ELIDA ALVAREZ'},
+  {dir:'Damian P Garat 718',nom:'ANA MARIA PERDOMO'},
+  {dir:'CORTADA 60 BIS Y MENDIBURU',nom:'FLORENCIA FAVRE'},
+  {dir:'Calle publica 682',nom:'RAMON ESTEBAN ZARRANZ'},
+  {dir:'HUMBERTO PRIMO 3528',nom:'CRISTHIAN ALBERTO GALARZA'},
+  {dir:'Pirovano y Cortada 53',nom:'LUIS ALBERTO BARRIOS'},
+  {dir:'Laroca Centro 2484',nom:'NELIDA TERECITA CARETA'},
+  {dir:'Gendarmeria Nacional 243',nom:'ANA SANCHEZ'},
+  {dir:'Chabrillon 1244',nom:'AMALIA INES CAMINAL'},
+  {dir:'Los alamos 445',nom:'CLAUDIA ESTER TRUCCO'},
+  {dir:'Asuncion y Colon',nom:'GLADYS HERMELINDA RAMIREZ'},
+  {dir:'Rivadavia 1157',nom:'NATALIA MOLINA'},
+  {dir:'Roque Saenz Peña 376',nom:'MARGARITA INES ARIGOS'},
+  {dir:'Diamante 1030',nom:'MIRIAM M. MACIEL'},
+  {dir:'Echague 1156',nom:'OLGA GRACIELA SAURE'},
+  {dir:'Humberto Primero 671',nom:'PAMELA SARSAN'},
+  {dir:'J J Mega 920',nom:'NESTOR HERNAN MAYDANA'},
+  {dir:'San Juan 2480',nom:'JIMENA DE ALBA'},
+  {dir:'cortada entre rios',nom:'ROCIO AYELEN CENTURION TRUPIANO'},
+  {dir:'CHABRILLON 1068',nom:'MARIA DE LOS ANGELES OLACE'},
+  {dir:'la paz 890',nom:'PAOLA WEHREN'},
+  {dir:'echague 83',nom:'DA ROSA TOMASITA SAMPALLO'},
+  {dir:'ESTEBAN ECHEVERRIA 1414',nom:'RENZO PASCARIELLO'},
+  {dir:'tavella 1718',nom:'CAMILA CURBELO'},
+  {dir:'ROCAMORA 873',nom:'MARIA LAURA CARLINI'},
+  {dir:'ituzango 546',nom:'ALEJANDRO CORBELLA'},
+  {dir:'Dr florenza 729',nom:'SUSANA BEATRIZ BENITEZ'},
+  {dir:'irigoyen 1574',nom:'NORMA BEATRIZ PASCUCCIELLO'},
+  {dir:'Concejal veiga 2549',nom:'ANDREA LOPEZ'},
+  {dir:'BATALLA DE CEPEDA Y MAGARINOS',nom:'SERGIO VELEZ'},
+  {dir:'LA PAMPA 1127',nom:'LAURA EDITH RAMOS'},
+  {dir:'BOULEVARD YUQUERI 1601',nom:'KAREN BARRIOS'},
+  {dir:'chabrillon 1090',nom:'CARLOS MARCELO LARROCCA'},
+  {dir:'La Rioja 3779',nom:'JESICA NICULES'},
+  {dir:'Monseñor de Andrea y Gendarmeria. Nacional',nom:'MARIA FLORENCIA LOPEZ BERNIS'},
+  {dir:'Victorino Simon 1598',nom:'ALICIA BEATRIZ OLACE'},
+  {dir:'Isthilart y Lieberman',nom:'DORA SOFIA HIDALGO'},
+  {dir:'Club Santo Grande',nom:'INDIANA PAOLA ESPINDOLA'},
+  {dir:'San Carlos 804',nom:'NILDA ALICIA DEL CARMEN SCATTONE'},
+  {dir:'Solari',nom:'RUBEN ALEJANDRO VARELA'},
+  {dir:'2 de Abril y Dr. Saure',nom:'GABRIEL JORGE LUIS GOMEZ'},
+  {dir:'Alberdi 353',nom:'NORA ANCAROLA'},
+  {dir:'Bolivia 939',nom:'NELIDA ANGELICA GONZALEZ'},
+  {dir:'Presbitero del Castillo 856',nom:'CAROLINA MARIA RUSSO'},
+  {dir:'Juan Pablo Primero',nom:'CESAR MIGUEL ROMERO'},
+  {dir:'Ramirez 513',nom:'MARGARITA DOMINGA GOMEZ'},
+  {dir:'Diamante y San Lorenzo',nom:'DE BUZZATTO ANA M. REPETTO'},
+  {dir:'Chabrillon 887',nom:'LORENA HERNANDEZ'},
+  {dir:'Entre Rios 324',nom:'MARIA DEL CARMEN MOULINS'},
+  {dir:'CHILE 2782 BARRIO SAN PANTALON',nom:'ALEJANDRA HERGENRETER'},
+  {dir:'Balcarse 595',nom:'ANTONELLA TISOCCO'},
+  {dir:'Teniente Ibañez 402',nom:'JULIA MARIA CABRERA'},
+  {dir:'J.J. Paso 387',nom:'MIGUEL ANGEL COLMAN'},
+  {dir:'Velez Sarfield 180',nom:'LUCRECIA ESTELA MARIS ROZA'},
+  {dir:'Santa Fe',nom:'MARTA BEATRIZ CAIRE'},
+  {dir:'Echague 1118',nom:'JULIO EDGARDO FISCHBACH'},
+  {dir:'CALLE GERARDO VICTORIN 1776',nom:'SILVIA BEATRIZ DA SILVEYRA'},
+  {dir:'Jacinto Bon 73',nom:'CARLOS FERNANDO GODOY'},
+  {dir:'Rivadavia 1520',nom:'ELVIO ALEJANDRO BOLLINI'},
+  {dir:'Velez Sarfield 899',nom:'JUAN CARLOS BARRETO'},
+  {dir:'CHILE 4685 EN VILLA ZORRAQUIN',nom:'ANTONELLA INES ANESETTI'},
+  {dir:'cadario norte 260',nom:'MARIEL ESTELA RAMIREZ'},
+  {dir:'lamadrid y catamarca',nom:'AVELINO ALCIDES RUIZ DIAZ'},
+  {dir:'MARIO GATTO 1152 ESQUINA ISTHILAR',nom:'NATALIA SUAREZ TEJEIRA'},
+  {dir:'GUARUMBA Y BROWN',nom:'MARIA CECILIA PESSOLANI'},
+  {dir:'leguizamon 436',nom:'GERARDO SEBASTIAN GOMEZ'},
+  {dir:'Avellaneda 675',nom:'MARIA CRISTINA BOUDOT'},
+  {dir:'Espejo 90',nom:'MARIA ELENA MONTIEL'},
+  {dir:'GUARUMBA Y BROWN',nom:'VANINA ROGGERO'},
+  {dir:'PERU 4752',nom:'NOELIA LEZCANO'},
+  {dir:'d. p. garat 571',nom:'MARIA INES BEBER'},
+  {dir:'HTO YRIGOYEN 1615',nom:'NORA ESTER RODRIGUEZ'},
+  {dir:'avellaneda 425',nom:'MARIA VALENZUELA'},
+  {dir:'salto uruguayo 680',nom:'SUSANA BEATRIZ MALVASIO'},
+  {dir:'san luis 318',nom:'HILDA FABIANA ROUSSERIE'},
+  {dir:'republica del brail y damian p garat',nom:'ANIBAL DANIEL GOYA'},
+  {dir:'grimber 309',nom:'CRISTIAN HERNAN PASSARELLA'},
+  {dir:'AUGUSTO NIEZ 1051',nom:'ENRIQUE TAMANO'},
+  {dir:'España',nom:'MARCELA CAROLINA DUCRET'},
+  {dir:'SAAVEDRA 565',nom:'MARINA LUCERO'},
+  {dir:'Las Heras 225',nom:'ELENA GRIMBER'},
+  {dir:'San Lorenzo 528 Oeste',nom:'MARTA ISABEL FERNANDEZ'},
+  {dir:'ITUZAINGO N° 3053 BIEN EN LA ESQUINA DE ITUZAINGO Y VITO MORENO',nom:'ARIEL ELIAS MENDEZ'},
+  {dir:'SOLARI 117',nom:'HECTOR MARCELO FERNANDEZ'},
+  {dir:'Basallo y Chabrillon',nom:'MARIA ESTER JAUREGUIBERRY'},
+  {dir:'CUADRADO I',nom:'SILVIA STEFANIA DURAND'},
+  {dir:'DIAMANTE Y URDINARRAIN',nom:'EDUARDO ZUBIZARRETA'},
+  {dir:'esquina rio iguazu y prefectura naval',nom:'VALENTINA PASTORINI'},
+  {dir:'Gobernador Cresto 3777',nom:'STEFANIA MARIANI'},
+  {dir:'Guarumba sur',nom:'RAMON MARTIN PENSOTTI'},
+  {dir:'SAN LUIS Y DON SEGUNDO SOMBRA',nom:'ADELA MARIANI'},
+  {dir:'Colombia 261',nom:'MARIA VALLORY'},
+  {dir:'Venezuela 389',nom:'CLEMENCIA CALIXTA PATIÑO'},
+  {dir:'Che Guevara 1531',nom:'MARIANA ZTAGNUOLO'},
+  {dir:'Gerardo Yoya 268',nom:'RAQUEL NOEMI TALERMANN'},
+  {dir:'Sto Cabral 1061',nom:'OSCAR ALBERTO CAZZATTI'},
+  {dir:'Mñor Rosch 3521',nom:'JUAN ROBERTO STANGHELINI'},
+  {dir:'SAN JUAN 443',nom:'CARLOS ALBERTO VAZQUEZ'},
+  {dir:'Gregoria Perez 474',nom:'HUGO DANIEL TORCELLO'},
+  {dir:'Mendiburu 671',nom:'RUBEN DARIO GIRARD'},
+  {dir:'Presidente Ilia 234',nom:'JORGE RAUL FERRARI'},
+  {dir:'Diamante y Luis solari centro',nom:'SARA ESTER LAPALMA'},
+  {dir:'FEDERACION 986',nom:'MARCELA GUERRERO'},
+  {dir:'PERU ESTE 2286',nom:'RITA PEREZ'},
+  {dir:'11 DE NOVIEMBRE 124',nom:'ISABEL MERRO'},
+  {dir:'paula albarracin 1363',nom:'ANDRES JESUS DUARTE'},
+  {dir:'solari',nom:'RICARDO LUIS NUÑEZ'},
+  {dir:'lamadrid 1249',nom:'JOSE RODOLFO GONZALEZ'},
+  {dir:'BALCARCE 330',nom:'STEFANO ERMILIO'},
+  {dir:'los gorriones',nom:'VANESA HERNANDEZ'},
+  {dir:'ITALIA Y PUBLICA',nom:'ANTONELLA MOREL'},
+  {dir:'roque saenz peña',nom:'OSVALDO HORACIO LOPEZ'},
+  {dir:'25 de Mayo 187',nom:'TAMARA NATALI SALDAÑA'},
+  {dir:'VIRGEN FATIMA 2100',nom:'ALEJANDRO MONTENEGRO'},
+  {dir:'vuelta obligado y fatima',nom:'RAUL HIPOLITO MEDINA'},
+  {dir:'FELICIANO 1346',nom:'AGUSTIN BERTRAN'},
+  {dir:'CASTELLI 367',nom:'ERNESTO NAHUEL YOYA'},
+  {dir:'GUALEGUAY Y PADRES CAPUCHINOS',nom:'VIVIANA CAJSINASCO'},
+  {dir:'SARA NEIRA 54',nom:'JOSE MARIA PERALTA'},
+  {dir:'DR. DEL CERRO 285',nom:'ERIKA BAMBACE'},
+  {dir:'25 de mayo 1069',nom:'GRACIELA INES PIETRANTUENO'},
+  {dir:'Los talas 1585',nom:'NICOLAS MARCHETTA'},
+  {dir:'Carlos alfonso venega',nom:'SILVIA BEATRIZ BLANCHAR'},
+  {dir:'Bulevar Ayui 5705',nom:'YOHANNA GUADALUPE JAURE'},
+  {dir:'Republica del Brasil 632',nom:'ANDRES MANDARINO'},
+  {dir:'LIEBERMAN 643',nom:'JULIANA PABLO'},
+  {dir:'Mariano Amable 1784',nom:'GISELA ELIZABETH SCHONFELD'},
+  {dir:'PAULA ALBARRACIN 1475 ENTRE DR DEL CERRO Y RICARDO ROJAS',nom:'GUSTAVO HORACIO ORTIZ'},
+  {dir:'Dr. Florenza 494',nom:'JULIA GOMEZ'},
+  {dir:'san jose s/n',nom:'DIEGO ARMANDO SANCHEZ'},
+  {dir:'Bolivia 900',nom:'ALICIA FOCHESATTO'},
+  {dir:'BROWN N 2772 Y PEDRO DUARTE',nom:'TERESA PERULL'},
+  {dir:'Carriego 130',nom:'MARIA ESTELA MOLINA'},
+  {dir:'Velez Sarfield 541',nom:'GUSTAVO JORGE SASTRE'},
+  {dir:'Moulins 323',nom:'AGUSTIN MIRABELLI'},
+  {dir:'Juan Pablo 1ro 3018',nom:'CESAR DANIEL CASSE'},
+  {dir:'San Juan y Echague',nom:'ELBA ZORZI'},
+  {dir:'P del Castillo 471',nom:'CAROLINA BRUNO'},
+  {dir:'Bolivia 1154',nom:'CAROLINA BRUNO'},
+  {dir:'Avenida los trabajadores 1509',nom:'CATALINA IOZZO'},
+  {dir:'Pellegrini 325',nom:'SILVIA KLOSS'},
+  {dir:'Buenos Aires 335',nom:'MARIA JOSE GALARZA'},
+  {dir:'CALLE PROSPERO BOVINO ALTURA 1527',nom:'STELLA MARIS MANSORE'},
+  {dir:'Salto uruguayo 416',nom:'SANTIAGO GUILLERMO OLHABERRY'},
+  {dir:'DR. Florenza 564',nom:'CELINA LEON'},
+  {dir:'Chile 705',nom:'ELENA GIOVANARDI'},
+  {dir:'HIPOLITO YRIGOYEN 2010 ENTRE CADARIO Y SAN CARLOS',nom:'RICARDO NAVARRO'},
+  {dir:'Italia',nom:'MERCEDES NOEMI ALMIRON'},
+  {dir:'la rioja 2171',nom:'NORA LINARD'},
+  {dir:'cabo miño 1721',nom:'MARIA DE LOS ANGELES HILARIO'},
+  {dir:'colon 1847',nom:'OSVALDO MATIAS MASETTO'},
+  {dir:'h. primo 3518',nom:'BELEN BALDAZARI'},
+  {dir:'Mendiburu 87',nom:'RICARDO ALBERTO ZAIR'},
+  {dir:'MOULIN Y CABO MIÑO',nom:'TATIANA MAGALI MERLO'},
+  {dir:'lucas gonzales y espejo',nom:'LUIS ALBERTO BELMONTE'},
+  {dir:'linier y misiones',nom:'LUIS ALBERTO BELMONTE'},
+  {dir:'tavella 2942',nom:'CACERES CECILIA'},
+  {dir:'LIBANO1655',nom:'LAURA GUADALUPE PELAYO'},
+  {dir:'Peru 2478',nom:'YOLANDA ELENA GOTTIG'},
+  {dir:'P. del Castillo 975',nom:'HECTOR REINALDO HUCK'},
+  {dir:'Calle publica 2900',nom:'ARIEL DARIO ARAUJO'},
+  {dir:'Balcarce',nom:'CARINA BOGADO'},
+  {dir:'MOULIN Y CABO MIÑO',nom:'FLORENCIA ARAUJO'},
+  {dir:'lamadrid 1847',nom:'PEDRO JORGE ROSSI'},
+  {dir:'Alem 93',nom:'MANUELA MONDOLO'},
+  {dir:'6 de Caballeria 1601',nom:'JULIO C. LAURIA'},
+  {dir:'Avellaneda 203',nom:'CRISTINA FRAYSSEFE'},
+  {dir:'MOULIN Y CABO MIÑO',nom:'MARCELO IGNACIO GOMEZ'},
+  {dir:'PADRES CAPUCHINOS 250',nom:'CECILIA GRACIELA TRICARICO'},
+  {dir:'Colon 1341',nom:'MAURIZIO MARIA DE LAS MERCEDES'},
+  {dir:'SAN JUAN 1150',nom:'JUAN PABLO GONZALEZ'},
+  {dir:'J.J. paso 200',nom:'GUSTAVO AGUSTIN SENDROS'},
+  {dir:'Gdor Cresto',nom:'CARLOS ALBERTO MARTY'},
+  {dir:'Chabrillon',nom:'BERNARDO ANDRES BORDON'},
+  {dir:'Chile 1448',nom:'MARCELO ALFREDO ALEJANDRO CORTIANA'},
+  {dir:'h. irigoyen 3750',nom:'JOSE LUIS NADAL'},
+  {dir:'9 de julio 217',nom:'MARIA TERESA BELLATI'},
+  {dir:'colon 1391',nom:'CESAR ANIBAL CHAS'},
+  {dir:'sbolivia 1517 oeste',nom:'ALICIA LILIANA CORNALO'},
+  {dir:'san juan 1506',nom:'ADELA DALZOTTO'},
+  {dir:'VELEZ SARFIELD 900',nom:'CLAUDIO GALVANI'},
+  {dir:'ituzaingo 2579',nom:'ANDRES FEDEICO ECHEVESTE'},
+  {dir:'Moulins 576',nom:'CALIPSO ARECO'},
+  {dir:'san lorenzo este 416',nom:'MARIA NELIDA VEGA'},
+  {dir:'Avenida Independecia 455',nom:'MARIA LILIANA MARTINEZ'},
+  {dir:'Augusto Niez 975',nom:'ANA VICTORIA CRISTINA TROYE'},
+  {dir:'Entre Rios y Abdala',nom:'RUBEN ANTONIO RIVERO'},
+  {dir:'Ramirez 800',nom:'ELVIO DANIEL CABALLERO'},
+  {dir:'Victorino Simon 1352',nom:'CRISTINA CARDOZO'},
+  {dir:'Bolivia 469',nom:'ROSANA ACEVEDO'},
+  {dir:'Brown 1750',nom:'ROSA DEMEDRANO OLIVERA'},
+  {dir:'Vuelta de obligado y La Paz',nom:'GRACIELA MACLIN'},
+  {dir:'Gdor. Cresto 3804, Esquina Segundo Sombra',nom:'SUSANA GRACIELA BERON'},
+  {dir:'Diamante y Guemes',nom:'MARIA SILVIA MICHEL'},
+  {dir:'marita lessa y peru',nom:'NATALIA MARIA GRAZIANO'},
+  {dir:'Gerado Yoya 238',nom:'MARTIN ENRIQUE OTAEGUI'},
+  {dir:'Coldaroli 465',nom:'GLADIS NORMA BLANC'},
+  {dir:'San Juan y Nunca mas',nom:'CLAUDIO EUGENIO SALOJ'},
+  {dir:'montevideo 262',nom:'ELSA CATALINA BORREGO'},
+  {dir:'Moreno 1116',nom:'NATALIA GONZALEZ'},
+  {dir:'Av. Monseñor Ricardo Rösch 4582',nom:'ANGELICA TERESITA MOSNA'},
+  {dir:'colon 809',nom:'NESTOR FRANCISCO GUI CUBERLI'},
+  {dir:'rivadavia 827',nom:'MARIA BELEN CISNERO'},
+  {dir:'Rocamona 369',nom:'RAMONA BENITEZ'},
+  {dir:'BULEVARD YUQUERI Y ESPANA',nom:'CECILIA ALVAREZ'},
+  {dir:'SARMIENTO 55',nom:'CESAR RUBEN GONZALEZ'},
+  {dir:'TRATADO DEL PILAR Y BOLIVIA',nom:'JULIAN EDUARDO OCHOA'},
+  {dir:'ituzanigo 1259',nom:'ZULMA ITATI CORRADINI'},
+  {dir:'25 de mayo 921',nom:'MARIANELA ZORZI'},
+  {dir:'nogoya',nom:'ADRIANA GONZALEZ'},
+  {dir:'virgen de fatima 2722',nom:'ALEJANDRA WILIMAN'},
+  {dir:'prospero bovino 1540',nom:'CLAUDIA ALEJANDRA PEREZ'},
+  {dir:'Alem 177',nom:'JORGE OMAR GILES'},
+  {dir:'Salto Uruguayo 679',nom:'EDUARDO RUBEN FRANSOI'},
+  {dir:'Rivadavia 821',nom:'SUSANA ABALOS'},
+  {dir:'CALLE 2 DE ABRIL 1920',nom:'CRISTHIAN ROMAN MARCELO MARTINEZ'},
+  {dir:'Cabo Miñoz y Teniete Ibañez',nom:'DELIA AZUCENA BUEDE'},
+  {dir:'espejo y chajari',nom:'VALENTINA PASTORINI'},
+  {dir:'LIEBERMAN 600',nom:'SUSANA MARIA DEL PILAR NOGUERA'},
+  {dir:'Gria. Nacional y Tucuman',nom:'BRUNO ANTONIO RODA'},
+  {dir:'Cabo Miñoz y Teniete Ibañez',nom:'MAIRA CABRERA'},
+  {dir:'Sara Neira 415',nom:'DIANA LUCIA SALUD'},
+  {dir:'Juan Manuel de Rosas',nom:'CARLOS ALBERTO CARUTTI'},
+  {dir:'La Paz Velazco y Ruta 4',nom:'SOLEDAD NIEVES HERNANDEZ'},
+  {dir:'3 DE FEBRERO',nom:'SILVIA STEFANIA DURAND'},
+  {dir:'Liniers 809',nom:'VALENTINA PASTORINI'},
+  {dir:'Avellaneda 186',nom:'FATIMA MARIA DE LOS ANGELES CALABRESE'},
+  {dir:'Republica del Paraguay 1038',nom:'JOSE ENRIQUE CARMARAN SACCOMANDI'},
+  {dir:'Teniente Ibañez y Cabo Miñoz',nom:'LUZ JAZMIN AGUERREBERRE'},
+  {dir:'Mexico entre Av. Unión y San José',nom:'MICHEL DELIGNY SPINATELLI'},
+  {dir:'Gendarmería Nacional 1176',nom:'VALENTINA PASTORINI'},
+  {dir:'Maipú 1278',nom:'VALENTINA PASTORINI'},
+  {dir:'Liniers 665 Bis',nom:'JONATHAN NAHUEL PESOA'},
+  {dir:'Del Libano 1596',nom:'CLAUDIO HORACIO CACERES'},
+  {dir:'Brown',nom:'BEATRIZ GRISELDA MENTEGUIAGA'},
+  {dir:'Mendiburo 856',nom:'JORGE OMAR FOLLONIER'},
+  {dir:'Teniente Ibañez y Cabo Miñoz',nom:'ROMINA MARIELA GOMEZ'},
+  {dir:'Tala 1448',nom:'ELISA MARIA ROCIO GRIECO'},
+  {dir:'Echague 1063',nom:'CELINA BEATRIZ CENTENO'},
+  {dir:'Las palmeras 290',nom:'CECILIA PATRICIA SOMMER'},
+  {dir:'De los viñedos 446',nom:'NICOLAS SEBASTIAN ROJAS'},
+  {dir:'R. de Escalada y Nestor Garat',nom:'GUILLERMO DANIEL MARCONE'},
+  {dir:'santa trinidad 3760',nom:'SONIA MARIA PETELIN'},
+  {dir:'independencia y alvear',nom:'JORGE CECILIO NIZ'},
+  {dir:'luis vernet 1022',nom:'GLADIS MARINA PEREZ'},
+  {dir:'pirovano 360',nom:'JOAQUIN RICARDO GONZALEZ'},
+  {dir:'Cabo Miñoz y Teniete Ibañez',nom:'EMILCE BEATRIZ FIGUEREDO'},
+  {dir:'Urdinarrain 676',nom:'JUANA AMELIA SAVIO'},
+  {dir:'Entre Ríos 424',nom:'GERMAN EDUARDO MELLA'},
+  {dir:'buenos aires 379',nom:'NORA ANCAROLA'},
+  {dir:'avenida independencia 405',nom:'ARIEL JESUS NOCELLI'},
+  {dir:'san juan y gerardo yoya',nom:'ANA MARIA LATRILLE'},
+  {dir:'feliciano 1060',nom:'RUBEN ANTONIO RIVERO'},
+  {dir:'Teniente Ibañez y Arabe Siria',nom:'GABRIELA ALEJANDRA BENITEZ'},
+  {dir:'Echague y Presbitero del Castillo',nom:'SILVINA ISABEL GALLO'},
+  {dir:'Sto Cabral 365',nom:'RUBEN ANTONIO RIVERO'},
+  {dir:'Cjal Veiga 1093',nom:'MARIA ALEJANDRA DELALOYE'},
+  {dir:'Laprida 2471',nom:'JANET PAOLA ANDINO'},
+  {dir:'Lucas Gonzalez 749',nom:'JORGE RAMIREZ'},
+  {dir:'Echeverria 1262',nom:'RAMON DARIO COLMAN'},
+  {dir:'J. J. Mega 209',nom:'SILVIA FERNANDEZ'},
+  {dir:'Barrio Mendieta',nom:'ELVIRA FUENTES'},
+  {dir:'Presidente Illia 720',nom:'MICAELA GUAGLIANONE'},
+  {dir:'Aras General Belgrano',nom:'GRACIELA ESTECHE'},
+  {dir:'Lucas Gonzales 1039',nom:'VALENTINA PASTORINI'},
+  {dir:'Urquiza 1262',nom:'MARIA DE LOS ANGELES NIZ'},
+  {dir:'La Paz 1098',nom:'LUIS MARIA CRISANTO FORNI'},
+  {dir:'Belgrano 1957',nom:'MARIA TERESITA MALLERET'},
+  {dir:'Espejo 882',nom:'ALICIA CRISTINA DIAZ'},
+  {dir:'San Martin 431',nom:'JUAN MATIAS MAIOCCO'},
+  {dir:'Remedios de Escalada 2050',nom:'ANGEL MARIA NUÑEZ'},
+  {dir:'MORENO 1647',nom:'MARIA NOELIA DIAZ VELEZ'},
+  {dir:'Antonio Baez 1690',nom:'RODOFO MANUEL AVALOS'},
+  {dir:'rivadavia 765',nom:'VIVIANA CALGARO'},
+  {dir:'mariano amable',nom:'AGUSTIN LUJAN SANCHEZ'},
+  {dir:'Pirovano 328',nom:'DORA CARMEN GIL KUEIDER'},
+  {dir:'ASUNCION 74',nom:'SILVIA FLORES'},
+  {dir:'Jose larroca 2689',nom:'MAIRA YAMILA FOCHESATO'},
+  {dir:'Monseñor de andrea 725',nom:'FACUNDO SEBASTIAN GRIGOLATTO'},
+  {dir:'CORRIENTES 447BIS',nom:'PABLO LEONEL CAMINO'},
+  {dir:'MARIO GATTO 1081',nom:'SEBASTIAN MONGE'},
+  {dir:'tavella 1617',nom:'MARIA VALERIA DAVANZO'},
+  {dir:'CALLE ENTRE RIOS 888',nom:'SERGIO DANIEL CUTRO'},
+  {dir:'GUALEGUAY 1300/1350',nom:'ROMINA BOUVET'},
+  {dir:'DIAMANTE Y AYUI 800',nom:'VIVIANA CAJSINASCO'},
+  {dir:'SARGENTO CABRERA 50 ESQUINA ENTRE RIOS',nom:'BARBARA IRIARTE PINTO'},
+  {dir:'D.P.Garat 878',nom:'MARTIN LUCIANO CHICHIZOLA'},
+  {dir:'Prebistero del Castillo y Echague',nom:'DORA INES YOYA'},
+  {dir:'MUSETTI 1058 Y VILLAGUAY',nom:'MARIA SOLEDAD ARRIGARAN'},
+  {dir:'CALLE 60 Y YAMANDU RODRIGUEZ',nom:'JESICA MERCEDES AGUIRRE'},
+  {dir:'San Luis y Balcarse',nom:'DAMIAN ELISEO STECHINA'},
+  {dir:'REPUBLICA ARGENTINA NORTE 315',nom:'MIGUEL ANGEL VERA'},
+  {dir:'P. DEL CASTILLO 1470',nom:'FERNANDO DALLA TEA'},
+  {dir:'llas heras 1314',nom:'GLORIA MONZON'},
+  {dir:'DE LOS VINEDOS 428 ENTRE CONCEJAL VEIGA E ITUZANGO',nom:'MARIANO EZEQUIEL ENCINA'},
+  {dir:'Antartida Argentina 174',nom:'DORA ELIZABETH CALDERADA'},
+  {dir:'Peru 1624',nom:'STELLA MARIS MIGLLIORA DE ROMERO'},
+  {dir:'Brown 1075',nom:'MARIO ALBERTO CULPIAN'},
+  {dir:'Hipolito Irigoyen 1585',nom:'MARIA TERESA BERTONI'},
+  {dir:'Salta 583',nom:'VALENTINA PASTORINI'},
+  {dir:'Asunción 624',nom:'VALENTINA PASTORINI'},
+  {dir:'Montevideo 880',nom:'VALENTINA PASTORINI'},
+  {dir:'Pasaje monte caseros 1059',nom:'VALENTINA PASTORINI'},
+  {dir:'Bdo de Irigoyen 130',nom:'ENRIQUE GUTMAN'},
+  {dir:'Misiones 2019',nom:'VALENTINA LAFOURCADE'},
+  {dir:'Bv. Yuqueri 1504',nom:'MARCELA ALEJANDRA PIÑEIRO'},
+  {dir:'Eva peron 3111',nom:'EDUARDO LUIS RASTELLI'},
+  {dir:'Roque Sàenz Peña 847',nom:'JESICA ANTONELLA FERNANDEZ'},
+  {dir:'Hipolito Yrigoyen 834',nom:'AVELINO ALCIDES RUIZ DIAZ'},
+  {dir:'Humberto Primero 1005',nom:'VIVIANA SOLEDAD TISOCCO'},
+  {dir:'NOGUEIRA 558',nom:'MARIANO EZEQUIEL ENCINA'},
+  {dir:'Gdor Cresto 1341',nom:'MAURICIO OSCAR CABRERA'},
+  {dir:'Marita Lessa 56',nom:'HECTOR ENRIQUE BERTHET'},
+  {dir:'9 de Julio 28',nom:'MARIA CAROLINA AGOSTINI'},
+  {dir:'Magariños',nom:'ENZO DAMIAN CAZARRE'},
+  {dir:'9 de julio 212',nom:'ANGELICA AISPURU'},
+  {dir:'Mitre 431',nom:'MATIAS EZEQUIEL PEREYRA'},
+  {dir:'Río Iguazú 396',nom:'VALENTINA PASTORINI'},
+  {dir:'Calle Publica 1',nom:'OLGA BOLORINO'},
+  {dir:'Ramirez 72',nom:'VALENTINA PASTORINI'},
+  {dir:'Victorino Simon 1385',nom:'NELIDA S. MARCOGIUSEPPE'},
+  {dir:'Sto Cabral 522',nom:'NICOLAS ALFREDO SCHIEBERT'},
+  {dir:'Moreno 1103',nom:'VALENTINA PASTORINI'},
+  {dir:'Diamante y guemes',nom:'VALENTINA PASTORINI'},
+  {dir:'Moreno 867',nom:'VALENTINA PASTORINI'},
+  {dir:'San Lorenzo 1253',nom:'GABINO STUART LEESON'},
+  {dir:'Tala y Urdinarrain',nom:'VALENTINA PASTORINI'},
+  {dir:'feliciano y ayui oeste',nom:'VALENTINA PASTORINI'},
+  {dir:'montevideo 854',nom:'VALENTINA PASTORINI'},
+  {dir:'Lucas Gonzales y asunción',nom:'VALENTINA PASTORINI'},
+  {dir:'Av.Chajari 1742',nom:'GASPAR HAURE'},
+  {dir:'ECHAGÜE 870',nom:'MONICA MILAGROS CAPOVILA'},
+  {dir:'Ingeniero Nogueira y Alvear',nom:'AURELIO MIGUEL GERMANIER'},
+  {dir:'Entre Rios 402',nom:'DELIA REGINA CIPOLAT'},
+  {dir:'Prospero Bobino 2117',nom:'ESTEBAN ADOLFO ALISIO'},
+  {dir:'JORGE ODIAR 2309',nom:'MARIA JOSE BENITEZ'},
+  {dir:'P. del Castillo 1466',nom:'FERNANDO DALLA TEA'},
+  {dir:'prospero Bovino 1872',nom:'MARIA MAGDALENA POL'},
+  {dir:'Hipolito Yrigoyen 3433',nom:'MARTA CARABALLO'},
+  {dir:'La Rioja y Antonio de Luque',nom:'EXEQUIEL FABIAN BAEZ'},
+  {dir:'las palmera 374',nom:'INES AURORA CABRERA'},
+  {dir:'maipu 1481',nom:'ALCIDES ANDRES MAQUIAVELO'},
+  {dir:'Vasallo 1268',nom:'LILIANA BEATRIZ PONZONI'},
+  {dir:'ALBERDI 28',nom:'MARIA CONCEPCION DUBARRY'},
+  {dir:'Entre Rios 318',nom:'NORA ELENA MOULIA'},
+  {dir:'San Francisco 4025',nom:'GABRIELA BEATRIZ GARDELLA'},
+  {dir:'teniente ibañez y antonio baez',nom:'CARLA MILENA LOPEZ'},
+  {dir:'NOGOYA Y J.J MEGA',nom:'ANDREA NOEMI BRAVO'},
+  {dir:'pellegrini 425',nom:'RITA ARCUSIN'},
+  {dir:'salta 498',nom:'HUGO CLAUDIO REBOT'},
+  {dir:'calle 53 oeste',nom:'HECTOR ANTONIO GOMEZ'},
+];
+
+// IG search helper for contactos — busca cuentas en Concordia
+function igSearchURL(name) {
+  return 'https://www.instagram.com/explore/search/keywordSearch/?q=' + encodeURIComponent(name + ' Concordia') + '&type=account';
+}
+
+let contactoPage = 0;
+const CONTACTO_PAGE_SIZE = 50;
+let contactoSearch = '';
+
+function renderContactos() {
+  const search = contactoSearch.toLowerCase();
+  const filtered = CONTACTOS_EXTRA.filter(c =>
+    !search || c.nom.toLowerCase().includes(search) || c.dir.toLowerCase().includes(search)
+  );
+  const total = filtered.length;
+  const start = contactoPage * CONTACTO_PAGE_SIZE;
+  const page = filtered.slice(start, start + CONTACTO_PAGE_SIZE);
+
+  document.getElementById('contactoCount').textContent = total + ' registros';
+
+  const tbody = document.getElementById('contactoTableBody');
+  tbody.innerHTML = page.map((c, i) => {
+    const initials = c.nom.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    return `<tr>
+      <td style="color:var(--t4);font-size:11px">${String(start+i+1).padStart(3,'0')}</td>
+      <td>
+        <div class="user-cell">
+          <div class="avatar-ph" style="background:linear-gradient(135deg,var(--s3),var(--s4));font-size:11px">${initials}</div>
+          <div>
+            <div class="user-name">${c.nom}</div>
+            <div style="font-size:11px;color:var(--t3)">📍 ${c.dir}</div>
+          </div>
+        </div>
+      </td>
+      <td><a href="${igSearchURL(c.nom)}" target="_blank" class="ig-link">📷 Buscar en IG</a></td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const pages = Math.ceil(total / CONTACTO_PAGE_SIZE);
+  const pgEl = document.getElementById('contactoPagination');
+  if(pages <= 1){ pgEl.innerHTML=''; return; }
+  let btns = '';
+  for(let p=0;p<pages;p++){
+    btns += `<button class="top-btn ${p===contactoPage?'btn-acc':'btn-ghost'} btn-sm" onclick="goContactoPage(${p})">${p+1}</button>`;
+  }
+  pgEl.innerHTML = btns;
+}
+
+function goContactoPage(p) {
+  contactoPage = p;
+  renderContactos();
+  document.getElementById('screen-contactos').scrollTop = 0;
+}
+</script>
+</div><!-- /appWrapper -->
+</body>
+</html>
